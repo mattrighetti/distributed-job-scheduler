@@ -1,9 +1,5 @@
 package Server.Network;
 
-//import jdk.jfr.internal.LogLevel;
-//import jdk.jfr.internal.LogTag;
-//import jdk.jfr.internal.Logger;
-
 import java.io.IOException;
 import java.net.Socket;
 
@@ -18,7 +14,6 @@ public class Peer {
     }
 
     public void contactTracker() {
-        // Logger.log(LogTag.JFR_EVENT, LogLevel.DEBUG, "Establishing connection to tracker server");
         try {
             this.serverSocket = new Socket(this.hostname, this.socketPort);
         } catch (IOException ioException) {
