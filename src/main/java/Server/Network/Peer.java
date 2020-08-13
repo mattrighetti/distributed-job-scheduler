@@ -33,5 +33,6 @@ public class Peer {
     public static void main(String[] args) {
         Peer peer = new Peer("localhost", 8080);
         peer.contactTracker();
+        while (true);
     }
 }
