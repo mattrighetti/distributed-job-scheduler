@@ -9,7 +9,7 @@ import java.net.Socket;
 
 public class TrackerServer {
     private ServerSocket server;
-    private final int port;
+    private int port;
     private static final Logger log = LogManager.getLogger(TrackerServer.class.getName());
 
     public TrackerServer(int port) {
@@ -18,14 +18,15 @@ public class TrackerServer {
 
     private static class PeerWorker implements Runnable {
         private final Socket peerSocket;
+        private static final Logger log = LogManager.getLogger(PeerWorker.class.getName());
 
         public PeerWorker(Socket peerSocket) {
             this.peerSocket = peerSocket;
         }
 
         public void run() {
-            System.out.print("Peer worker is running on port");
-            System.out.println("\tpeerSocket.getInetAddress() = " + peerSocket.getInetAddress());
+            log.trace("PeerWorker run method is starting");
+            log.debug("PeerSocket.getInetAddress() = {}", peerSocket.getInetAddress());
         }
 
         @Override
@@ -44,6 +45,10 @@ public class TrackerServer {
         }
     }
 
+    public void setPort(int port) {
+        this.port = port;
+    }
+
     public void listenSocket() {
         try {
             this.server = new ServerSocket(this.port);
@@ -57,7 +62,7 @@ public class TrackerServer {
             PeerWorker pworker;
             try {
                 pworker = new PeerWorker(server.accept());
-                log.debug("New PeerWorker has been created ->" + pworker);
+                log.info("New PeerWorker has been created -> {}", pworker);
                 Thread t = new Thread(pworker);
                 t.start();
             } catch (IOException e) {
@@ -68,11 +73,9 @@ public class TrackerServer {
     }
 
     public static void main(String[] args) {
-        TrackerServer server;
+        TrackerServer server = new TrackerServer(8080);
         if (args.length > 0) {
-            server = new TrackerServer(Integer.parseInt(args[0]));
-        } else {
-            server = new TrackerServer(8080);
+            server.setPort(Integer.parseInt(args[0]));
         }
 
         server.listenSocket();

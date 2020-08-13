@@ -1,5 +1,9 @@
 package Server.Network;
 
+import Server.TrackerServer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.net.Socket;
 
@@ -7,6 +11,7 @@ public class Peer {
     private final String hostname;
     private final int socketPort;
     private Socket serverSocket;
+    private static final Logger log = LogManager.getLogger(Peer.class.getName());
 
     public Peer(String hostname, int socketPort) {
         this.hostname = hostname;
@@ -31,8 +36,12 @@ public class Peer {
     }
 
     public static void main(String[] args) {
-        Peer peer = new Peer("localhost", 8080);
-        peer.contactTracker();
-        while (true);
+        if (args.length > 0) {
+            Peer peer = new Peer("localhost", Integer.parseInt(args[0]));
+            peer.contactTracker();
+        } else {
+            log.fatal("No port was found as import parameter.\nExiting program.");
+            System.exit(-1);
+        }
     }
 }
