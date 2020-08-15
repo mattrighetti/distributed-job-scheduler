@@ -1,8 +1,9 @@
 package Server;
 
-import Server.Network.Service.PeerWorker;
-import Server.Network.Service.ServerService;
-import Server.Network.Service.ServerSocketService;
+import Server.Network.PeerWorker;
+import Server.Network.ServerService;
+import Server.Network.ServerSocketService;
+import Server.Network.Services.PeerHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -60,8 +61,8 @@ public class TrackerServer {
      * initServerSocket opens the ServerSocket connection and starts listening for other peers
      */
     public void initServerSocket() {
-        ServerSocketService serverSocketService = new ServerSocketService(8080, peerHandler);
-        serverSocketService.listenForConnections();
+        ServerSocketService serverSocketService = new ServerSocketService(8080);
+        serverSocketService.listenForIncomingConnections(new PeerHandler(this.peersIpAddresses));
     }
 
     public static void main(String[] args) {
