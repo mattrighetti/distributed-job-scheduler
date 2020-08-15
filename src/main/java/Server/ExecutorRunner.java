@@ -1,30 +1,20 @@
 package Server;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class ExecutorRunner {
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
-    Boolean isBusy = false;
+    Future fut;
 
-    public void executeJob(final Job job) {
-        isBusy=true;
-        executor.execute(new Runnable() {
-            public void run() {
-                try {
-                    job.sleep(10000);
-                    System.out.println("Job number " + job.getJobId() + " is done\n");
-                    job.setIsDone();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
+    public void executeJob(Job jobToBeExecuted) {
+        fut = executor.submit((Callable) jobToBeExecuted);
     }
 
-    public Boolean getBusy() {
-        return isBusy;
+    public Future getFut() {
+        return fut;
     }
 }
