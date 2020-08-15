@@ -1,25 +1,24 @@
 package Server.Network.Services;
 
-import Server.Network.PeerWorker;
+import Server.Network.Tracker.TrackerServerUtils;
 import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 
-public class PeerHandler extends SocketRunnable {
+public class P2THandler extends SocketRunnable {
     private final List<String> peersIpAddresses;
+    private final TrackerServerUtils trackerServerUtils;
 
-    private static final Logger log = LogManager.getLogger(PeerWorker.class.getName());
+    private static final Logger log = LogManager.getLogger(P2THandler.class.getName());
 
-    public PeerHandler(List<String> peersIpAddresses) {
-        this.peersIpAddresses = new ArrayList<>(peersIpAddresses);
+    public P2THandler(TrackerServerUtils trackerServerUtils) {
+        this.trackerServerUtils = trackerServerUtils;
+        this.peersIpAddresses = this.trackerServerUtils.getIpAddresses();
     }
 
     @Override
@@ -28,16 +27,19 @@ public class PeerHandler extends SocketRunnable {
         log.debug("peerSocket -> {}", socket);
         try (
                 OutputStreamWriter out = new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8);
-                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         ) {
             String jsonString = new Gson().toJson(peersIpAddresses.toArray());
             log.debug("Sending JSON : {}", jsonString);
             out.write(jsonString);
             out.flush();
             log.info("Closing connection...");
+            socket.close();
         } catch (IOException err) {
             log.error("Encountered error while writing to outputStream");
             err.printStackTrace();
         }
+
+        log.debug("Adding {} to ipAddressesList", socket.getInetAddress().getHostAddress());
+        trackerServerUtils.addIpToArrayList(socket.getInetAddress().getHostAddress());
     }
 }

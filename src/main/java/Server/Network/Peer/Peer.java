@@ -1,4 +1,4 @@
-package Server.Network;
+package Server.Network.Peer;
 
 import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
@@ -9,14 +9,21 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Peer {
-    private ServerSocketService serverSocketService;
-    private final ServerService<Socket> peerWorker = socket -> {
-        log.debug("Received connection from Socket: {}", socket);
-    };
+    private PeerSocketService peerSocketService;
+    private final ConcurrentMap<String, Integer> peersQueueInfo;
+    private final AtomicInteger jobsInQueue;
 
     private static final Logger log = LogManager.getLogger(Peer.class.getName());
+
+    public Peer() {
+        this.peersQueueInfo = new ConcurrentHashMap<>();
+        this.jobsInQueue = new AtomicInteger(0);
+    }
 
     public void contactTracker(String trackerHostname, int trackerSocketPort) {
         try (
@@ -40,7 +47,8 @@ public class Peer {
     }
 
     public void startListeningForPeers() {
-        serverSocketService = new ServerSocketService(8081);
+        peerSocketService = new PeerSocketService(5000);
+        peerSocketService.listenForIncomingConnections();
     }
 
     public void connectToPeers(List<String> ipAddresses) {
@@ -57,9 +65,6 @@ public class Peer {
     public static void main(String[] args) {
         if (args.length > 1) {
             Peer peer = new Peer();
-            log.info("{} listening for other peers", peer);
-            peer.startListeningForPeers();
-            log.info("Connecting to Tracker at {}:{}", args[0], args[1]);
             peer.contactTracker(args[0], Integer.parseInt(args[1]));
         } else {
             log.fatal("No port was found as import parameter.\nExiting program.");
