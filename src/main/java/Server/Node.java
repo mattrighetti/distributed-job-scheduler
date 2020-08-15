@@ -1,13 +1,16 @@
 package Server;
 
-import java.util.concurrent.ExecutionException;
-
-
 public class Node {
 
-    ExecutorRunner exampleExecutorRunner = new ExecutorRunner();
+    ExecutorRunner exampleExecutorRunner;
+    Queue queue;
 
-    public void runThatExecutor(Job jobToBeExecuted) throws ExecutionException, InterruptedException {
+    public Node() {
+        exampleExecutorRunner = new ExecutorRunner();
+        queue = new Queue();
+    }
+
+    public void runThatExecutor(Job jobToBeExecuted) {
         exampleExecutorRunner.executeJob(jobToBeExecuted);
     }
 
