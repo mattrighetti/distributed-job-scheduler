@@ -10,6 +10,13 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * TrackerServer is the central server that each peer know of and can contact
+ * to get other peers' ip addresses.
+ *
+ * Each time a Peer contacts the TrackerServer it requests ips and the TrackerServer
+ * adds its ip to a list of addresses.
+ */
 public class TrackerServer {
     private int port;
     private final List<String> peersIpAddresses = new ArrayList<>();
@@ -24,6 +31,10 @@ public class TrackerServer {
 
     private static final Logger log = LogManager.getLogger(TrackerServer.class.getName());
 
+    /**
+     * TrackerServer constructor initiates the TrackerServer that will listen for peers on the specified port
+     * @param port port to listen on
+     */
     public TrackerServer(int port) {
         this.port = port;
     }
@@ -32,6 +43,10 @@ public class TrackerServer {
         this.port = port;
     }
 
+    /**
+     * addIpToArrayList adds a given ip address to the TrackerServer's ip addresses list
+     * @param ipAddress
+     */
     public void addIpToArrayList(String ipAddress) {
         if (!peersIpAddresses.contains(ipAddress)) {
             log.debug("Adding {} to peersIpAddresses", ipAddress);
@@ -41,6 +56,9 @@ public class TrackerServer {
         }
     }
 
+    /**
+     * initServerSocket opens the ServerSocket connection and starts listening for other peers
+     */
     public void initServerSocket() {
         ServerSocketService serverSocketService = new ServerSocketService(8080, peerHandler);
         serverSocketService.listenForConnections();
