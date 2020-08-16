@@ -10,7 +10,7 @@ public class JobQueue {
         return queue;
     }
 
-    public Job extractNewJob() {
+    public Job extractNextJob() {
         Job toReturn = queue.removeFirst();
         return toReturn;
     }

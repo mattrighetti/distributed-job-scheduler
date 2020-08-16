@@ -12,9 +12,16 @@ public class Node {
         queue = new JobQueue();
     }
 
+    public void pushJobInQueue(Job job) {
+        queue.addNewJob(job);
+    }
 
-    public void runThatExecutor() {
-        exampleExecutorRunner.executeJob(queue.extractNewJob());
+    public Job extractNextJob(){
+        return queue.extractNextJob();
+    }
+
+    public void runThatExecutor(Job toExecute) {
+        exampleExecutorRunner.executeJob(toExecute);
     }
 
     public int getExecutingJobId() throws ExecutionException, InterruptedException {
@@ -22,6 +29,17 @@ public class Node {
         return jobCopy.getJobId();
     }
 
+    public Boolean isJobDone() {
+        return exampleExecutorRunner.getFut().isDone();
+    }
+
+    public int getQueueSize() {
+        return queue.numJobs();
+    }
+
+    public Job removeJob() {
+        return queue.removeJob();
+    }
 
 
 }
