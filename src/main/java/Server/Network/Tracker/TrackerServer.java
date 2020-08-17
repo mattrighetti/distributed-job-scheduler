@@ -4,8 +4,8 @@ import Server.Network.Services.P2THandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * TrackerServer is the central server that each peer know of and can contact
@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class TrackerServer implements TrackerServerUtils {
     private int port;
-    private final List<String> peersIpAddresses = new ArrayList<>();
+    private final List<String> peersIpAddresses = new CopyOnWriteArrayList<>();
 
     private static final Logger log = LogManager.getLogger(TrackerServer.class.getName());
 
@@ -36,7 +36,7 @@ public class TrackerServer implements TrackerServerUtils {
      * initServerSocket opens the ServerSocket connection and starts listening for other peers
      */
     public void initServerSocket() {
-        TrackerSocketService trackerSocketService = new TrackerSocketService(8080);
+        TrackerSocketService trackerSocketService = new TrackerSocketService(this.port);
         trackerSocketService.listenForIncomingConnections(new P2THandler(this));
     }
 
@@ -45,7 +45,7 @@ public class TrackerServer implements TrackerServerUtils {
      * @param ipAddress
      */
     @Override
-    public synchronized void addIpToArrayList(String ipAddress) {
+    public void addIpToArrayList(String ipAddress) {
         if (!peersIpAddresses.contains(ipAddress)) {
             log.debug("Adding {} to peersIpAddresses", ipAddress);
             peersIpAddresses.add(ipAddress);
@@ -55,7 +55,7 @@ public class TrackerServer implements TrackerServerUtils {
     }
 
     @Override
-    public synchronized List<String> getIpAddresses() {
+    public List<String> getIpAddresses() {
         return this.peersIpAddresses;
     }
 

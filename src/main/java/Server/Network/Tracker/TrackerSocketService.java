@@ -3,27 +3,21 @@ package Server.Network.Tracker;
 import Server.Network.Peer.PeerSocketService;
 import Server.Network.Services.SocketRunnable;
 import Server.Network.SocketService;
-import Server.Network.SocketWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TrackerSocketService extends SocketService {
-    private ConcurrentMap<String, SocketWrapper> peersSockets;
-
     protected ExecutorService threadPool = Executors.newFixedThreadPool(10);
 
     private static final Logger log = LogManager.getLogger(PeerSocketService.class.getName());
 
     public TrackerSocketService(int serverPort) {
         super(serverPort);
-        this.peersSockets = new ConcurrentHashMap<>();
     }
 
     /**
