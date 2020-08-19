@@ -2,17 +2,20 @@ package Server;
 
 import java.util.ArrayDeque;
 
-public class JobQueue {
+public class JobDeque {
 
-    ArrayDeque<Job> queue = new ArrayDeque<Job>();
+    private ArrayDeque<Job> queue;
+
+    public JobDeque() {
+        queue = new ArrayDeque<Job>();
+    }
 
     public ArrayDeque<Job> getQueue() {
         return queue;
     }
 
     public Job extractNextJob() {
-        Job toReturn = queue.removeFirst();
-        return toReturn;
+        return queue.removeFirst();
     }
 
     public void addNewJob(Job jobToAdd) {
@@ -20,13 +23,7 @@ public class JobQueue {
     }
 
     public Job removeJob() {
-        Job toReturn = queue.removeLast();
-        return toReturn;
+        return queue.removeLast();
     }
-
-    public int numJobs() {
-        return queue.size();
-    }
-
 
 }
