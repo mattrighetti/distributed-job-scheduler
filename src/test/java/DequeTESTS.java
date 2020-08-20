@@ -1,4 +1,4 @@
-package TESTS;
+package test;
 import Server.Job;
 import Server.JobDeque;
 import org.junit.jupiter.api.Assertions;

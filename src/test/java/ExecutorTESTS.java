@@ -1,4 +1,4 @@
-package TESTS;
+package test;
 import Server.ExecutorRunner;
 import Server.Job;
 import Server.JobDeque;
