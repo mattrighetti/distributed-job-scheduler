@@ -1,5 +1,8 @@
 package Server.Cluster;
 
+import Server.Message;
+import Server.MessageHandler;
+import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -8,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,13 +22,15 @@ public class LoadBalancerHandler implements Callable<Void> {
     private BufferedReader bufferedReader;
     private OutputStreamWriter outputStreamWriter;
     private final AtomicBoolean isStopped;
+    private final MessageHandler messageHandler;
     private final ExecutorService executorService = Executors.newFixedThreadPool(2);
 
     private static final Logger log = LogManager.getLogger(LoadBalancerHandler.class.getName());
 
-    public LoadBalancerHandler(Socket loadBalancerSocket) {
+    public LoadBalancerHandler(Socket loadBalancerSocket, MessageHandler messageHandler) {
         this.loadBalancerSocket = loadBalancerSocket;
         this.isStopped = new AtomicBoolean(false);
+        this.messageHandler = messageHandler;
     }
 
     public void initSocket() {
@@ -47,20 +53,24 @@ public class LoadBalancerHandler implements Callable<Void> {
                     if (in == null) {
                         log.debug("Received null, closing socket.");
                         this.stop();
-                        throw new IOException();
                     }
                     log.debug("Read: {}", in);
+                    messageHandler.handleMessage(new Gson().fromJson(in, Message.class));
                 }
+            } catch (SocketTimeoutException e) {
+                log.debug("No message was received for 30 seconds, closing connection...");
+                this.stop();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
     }
 
-    public void write(String JSONString) {
+    public void write(Message<?> message) {
+        log.info("Writing message to outputStream");
+        String json = new Gson().toJson(message);
         try {
-            log.info("Writing to outputStream");
-            this.outputStreamWriter.write(JSONString);
+            this.outputStreamWriter.write(json + '\n');
             this.outputStreamWriter.flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -87,9 +97,7 @@ public class LoadBalancerHandler implements Callable<Void> {
     public Void call() throws Exception {
         initSocket();
         read();
-        new Thread(() -> {
-            write("{ \"status\" : \"300\"}\n");
-        }).start();
+        write(new Message<>(200, Message.MessageType.INFO, 2000));
         return null;
     }
 }

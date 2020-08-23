@@ -1,5 +1,7 @@
 package Server.LoadBalancer;
 
+import Server.Message;
+import Server.MessageHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,7 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ReverseProxy {
+public class ReverseProxy implements MessageHandler {
     private final int listeningPort;
     private final ArrayList<ClientHandler> clients;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
@@ -46,7 +48,7 @@ public class ReverseProxy {
                     clientSocket.setSoTimeout(30 * 1000);
                     clientSocket.setKeepAlive(true);
                     log.debug("New client with address {} is connecting", clientSocket.getInetAddress());
-                    clientHandler = new ClientHandler(clientSocket);
+                    clientHandler = new ClientHandler(clientSocket, this);
                     
                     clients.add(clientHandler);
                     this.incomingConnectionsExecutor.submit(clientHandler);
@@ -56,6 +58,19 @@ public class ReverseProxy {
                 e.printStackTrace();
             }
         });
+    }
+
+    @Override
+    public void handleMessage(Message<?> message) {
+        log.debug("Message Status: {}", message.status);
+        switch (message.messageType) {
+            case JOB:
+                log.debug("Received job from node.");
+                // TODO add job to global queue
+            case INFO:
+                log.debug("Received info on node's queue");
+                // TODO update node's table
+        }
     }
 
     public static void main(String[] args) {

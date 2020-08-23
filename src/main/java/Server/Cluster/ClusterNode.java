@@ -1,5 +1,7 @@
 package Server.Cluster;
 
+import Server.Message;
+import Server.MessageHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -8,7 +10,7 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ClusterNode {
+public class ClusterNode implements MessageHandler {
     private LoadBalancerHandler loadBalancerHandler;
     private ExecutorService executorService = Executors.newFixedThreadPool(3);
 
@@ -17,10 +19,22 @@ public class ClusterNode {
     public void connect(String hostname, int port) {
         try {
             Socket socket = new Socket(hostname, port);
-            this.loadBalancerHandler = new LoadBalancerHandler(socket);
+            this.loadBalancerHandler = new LoadBalancerHandler(socket, this);
             this.executorService.submit(this.loadBalancerHandler);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void handleMessage(Message<?> message) {
+        switch (message.messageType) {
+            case INFO:
+                log.info("Received info from server");
+                // TODO print info message (?) this is probably never going to be needed
+            case JOB:
+                log.info("Received job from server");
+                // TODO add job to executor queue
         }
     }
 
