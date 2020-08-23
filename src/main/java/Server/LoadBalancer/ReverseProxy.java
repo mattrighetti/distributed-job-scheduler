@@ -40,8 +40,8 @@ public class ReverseProxy {
             ) {
                 Socket clientSocket;
                 ClientHandler clientHandler;
-                log.info("Listening for incoming client connections");
-                while (this.isStopped.get()) {
+                log.info("Listening for incoming client connections on port {}", this.listeningPort);
+                while (!this.isStopped.get()) {
                     clientSocket = serverSocket.accept();
                     clientSocket.setSoTimeout(30 * 1000);
                     clientSocket.setKeepAlive(true);
