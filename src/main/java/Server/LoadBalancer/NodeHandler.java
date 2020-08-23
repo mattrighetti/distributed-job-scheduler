@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ClientHandler implements Callable<Void> {
+public class NodeHandler implements Callable<Void> {
     private final Socket clientSocket;
     private BufferedReader bufferedReader;
     private OutputStreamWriter outputStreamWriter;
@@ -25,9 +25,9 @@ public class ClientHandler implements Callable<Void> {
     private final MessageHandler messageHandler;
     private final ExecutorService executorService = Executors.newFixedThreadPool(2);
 
-    private static final Logger log = LogManager.getLogger(ClientHandler.class.getName());
+    private static final Logger log = LogManager.getLogger(NodeHandler.class.getName());
 
-    public ClientHandler(Socket clientSocket, MessageHandler messageHandler) {
+    public NodeHandler(Socket clientSocket, MessageHandler messageHandler) {
         this.clientSocket = clientSocket;
         this.isStopped = new AtomicBoolean(false);
         this.messageHandler = messageHandler;

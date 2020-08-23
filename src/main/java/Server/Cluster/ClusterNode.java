@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 
 public class ClusterNode implements MessageHandler {
     private LoadBalancerHandler loadBalancerHandler;
-    private ExecutorService executorService = Executors.newFixedThreadPool(3);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(3);
 
     private static final Logger log = LogManager.getLogger(ClusterNode.class.getName());
 

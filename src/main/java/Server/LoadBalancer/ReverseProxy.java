@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ReverseProxy implements MessageHandler {
     private final int listeningPort;
-    private final ArrayList<ClientHandler> clients;
+    private final ArrayList<NodeHandler> clients;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final ExecutorService incomingConnectionsExecutor = Executors.newFixedThreadPool(5);
 
@@ -41,17 +41,17 @@ public class ReverseProxy implements MessageHandler {
                     ServerSocket serverSocket = new ServerSocket(this.listeningPort)
             ) {
                 Socket clientSocket;
-                ClientHandler clientHandler;
+                NodeHandler nodeHandler;
                 log.info("Listening for incoming client connections on port {}", this.listeningPort);
                 while (!this.isStopped.get()) {
                     clientSocket = serverSocket.accept();
                     clientSocket.setSoTimeout(30 * 1000);
                     clientSocket.setKeepAlive(true);
                     log.debug("New client with address {} is connecting", clientSocket.getInetAddress());
-                    clientHandler = new ClientHandler(clientSocket, this);
+                    nodeHandler = new NodeHandler(clientSocket, this);
                     
-                    clients.add(clientHandler);
-                    this.incomingConnectionsExecutor.submit(clientHandler);
+                    clients.add(nodeHandler);
+                    this.incomingConnectionsExecutor.submit(nodeHandler);
                 }
             } catch (IOException e) {
                 log.error("Encountered an error while working with a socket.");
