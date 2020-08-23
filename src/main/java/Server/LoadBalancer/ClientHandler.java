@@ -23,7 +23,7 @@ public class ClientHandler implements Callable<Void> {
     private OutputStreamWriter outputStreamWriter;
     private final AtomicBoolean isStopped;
     private final MessageHandler messageHandler;
-    private ExecutorService executorService = Executors.newFixedThreadPool(2);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(2);
 
     private static final Logger log = LogManager.getLogger(ClientHandler.class.getName());
 
