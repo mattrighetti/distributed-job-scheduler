@@ -6,7 +6,7 @@ public class Job extends Thread implements Callable {
     private int jobId;
 
     public Job () {
-        jobId = (int)(Math.random()*10000);
+        jobId = this.hashCode();
     }
 
     public int getJobId() {

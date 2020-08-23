@@ -35,6 +35,16 @@ public class ExecutorTESTS {
     }
 
     @Test
+    public void checkJobId() {
+        System.out.println(jobOne.getJobId());
+        System.out.println(jobTwo.getJobId());
+        System.out.println(jobThree.getJobId());
+        System.out.println(jobFour.getJobId());
+        System.out.println(jobFive.getJobId());
+    }
+
+
+    @Test
     public void checkExecutor() throws ExecutionException, InterruptedException {
 
         executorRunner.executeJob(jobDeque.extractNextJob());
