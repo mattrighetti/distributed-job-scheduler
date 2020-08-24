@@ -2,19 +2,22 @@ package Server;
 
 import java.util.concurrent.Callable;
 
-public class Job extends Thread implements Callable {
-    private int jobId;
+public class Job implements Callable<String> {
+    private final String jobId;
+    private final int milliseconds;
 
-    public Job () {
-        jobId = this.hashCode();
+    public Job (String jobId, int milliseconds) {
+        this.jobId = jobId;
+        // TODO init milliseconds in constructor
+        this.milliseconds = milliseconds;
     }
 
-    public int getJobId() {
+    public String getJobId() {
         return jobId;
     }
 
-    public Object call() throws Exception {
-        this.sleep(10000);
-        return this;
+    public String call() throws Exception {
+        Thread.sleep(this.milliseconds);
+        return "Executed Job[" + this.jobId + "] for " + this.milliseconds + " milliseconds";
     }
 }
