@@ -69,6 +69,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
             int character = (int)(Math.random()*ALPHA_NUMERIC_STRING.length());
             builder.append(ALPHA_NUMERIC_STRING.charAt(character));
         }
+        // TODO forward job to ReverseProxy with ticket hash so that it can be retrieved at will
         return builder.toString();
     }
 
