@@ -8,12 +8,7 @@ public class Job implements Callable<String> {
 
     public Job (String jobId, int milliseconds) {
         this.jobId = jobId;
-        // TODO init milliseconds in constructor
         this.milliseconds = milliseconds;
-    }
-
-    public String getJobId() {
-        return jobId;
     }
 
     public String call() throws Exception {
