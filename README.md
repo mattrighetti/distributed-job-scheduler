@@ -5,7 +5,20 @@
   Choose the strategy you find more appropriate to organize communication and coordination. Use stable storage to cope with failures of Executors.
 
 # Implementation
+### Main elements
+- `ReverseProxy`: Grand central LoadBalancer and job dispatcher
+- `ClusterNode`: Node on which jobs are executed
 
-|Network|Language|
-|:---:|:---:|
-| Socket | Java 11 |
+### Flow
+1. Client connects to `ClusterNode` and submits as many jobs as he/she wants and for each job he/she submits a ticket is
+returned so that he/she can later check the job's result
+2. `ClusterNode` forwards every incoming job to the `ReverseProxy`
+3. `ReverseProxy` constantly collects info on every `ClusterNode` jobQueue
+4. `ReverseProxy` distributes jobs equally among each `ClusterNode` so that they have, almost always, the same amount of jobs in their queue
+5. ...
+
+# How to run
+
+1. Start `ReverseProxy <port>`:
+2. Start `ClusterNode <reverse_proxy_ip> <reverse_proxy_port>`
+3. Connect to `ClusterNode` with `nc <cluster_node_ip> <cluster_node_port>`
