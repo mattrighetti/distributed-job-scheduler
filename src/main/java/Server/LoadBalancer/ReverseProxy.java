@@ -1,10 +1,9 @@
 package Server.LoadBalancer;
 
 import Server.Job;
+import Server.LBMessageHandler;
 import Server.Message;
 import Server.MessageHandler;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,15 +11,16 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ReverseProxy implements MessageHandler {
+public class ReverseProxy implements LBMessageHandler {
     private final int listeningPort;
-    private final ArrayList<NodeHandler> clients;
+    private final Map<NodeHandler, Integer> nodesInfo;
     private final Deque<Job> globalJobDeque;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final ExecutorService incomingConnectionsExecutor = Executors.newFixedThreadPool(5);
@@ -30,16 +30,12 @@ public class ReverseProxy implements MessageHandler {
 
     public ReverseProxy(int listeningPort) {
         this.listeningPort = listeningPort;
-        this.clients = new ArrayList<>();
+        this.nodesInfo = new ConcurrentHashMap<>();
         this.globalJobDeque = new ArrayDeque<>();
     }
 
     public void stop() {
         this.isStopped.set(false);
-    }
-
-    public AtomicBoolean isStopped() {
-        return isStopped;
     }
 
     public void openSocket() {
@@ -56,8 +52,8 @@ public class ReverseProxy implements MessageHandler {
                     clientSocket.setKeepAlive(true);
                     log.debug("New client with address {} is connecting", clientSocket.getInetAddress());
                     nodeHandler = new NodeHandler(clientSocket, this);
-                    
-                    clients.add(nodeHandler);
+
+                    nodesInfo.put(nodeHandler, -1);
                     this.incomingConnectionsExecutor.submit(nodeHandler);
                 }
             } catch (IOException e) {
@@ -68,7 +64,7 @@ public class ReverseProxy implements MessageHandler {
     }
 
     @Override
-    public <T> void handleMessage(Message<T> message) {
+    public <T> void handleMessage(Message<T> message, NodeHandler nodeHandler) {
         log.debug("Message Status: {}", message.status);
         switch (message.messageType) {
             case JOB:
@@ -82,7 +78,12 @@ public class ReverseProxy implements MessageHandler {
                 log.debug("Current number of jobs to dispatch: {}", this.globalJobDeque.size());
             case INFO:
                 log.info("Received info on node's queue");
-                // TODO update node's table
+                log.debug("Message status: {}, type: {}, payload: {}",
+                        message.status,
+                        message.messageType,
+                        message.payload
+                );
+                nodesInfo.put(nodeHandler, (int) message.payload);
         }
     }
 

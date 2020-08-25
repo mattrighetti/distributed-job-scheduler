@@ -1,6 +1,7 @@
 package Server.LoadBalancer;
 
 import Server.Job;
+import Server.LBMessageHandler;
 import Server.Message;
 import Server.MessageHandler;
 import com.google.gson.Gson;
@@ -26,15 +27,15 @@ public class NodeHandler implements Callable<Void> {
     private BufferedReader bufferedReader;
     private OutputStreamWriter outputStreamWriter;
     private final AtomicBoolean isStopped;
-    private final MessageHandler messageHandler;
+    private final LBMessageHandler lbMessageHandler;
     private final ExecutorService executorService = Executors.newFixedThreadPool(2);
 
     private static final Logger log = LogManager.getLogger(NodeHandler.class.getName());
 
-    public NodeHandler(Socket clientSocket, MessageHandler messageHandler) {
+    public NodeHandler(Socket clientSocket, LBMessageHandler lbMessageHandler) {
         this.clientSocket = clientSocket;
         this.isStopped = new AtomicBoolean(false);
-        this.messageHandler = messageHandler;
+        this.lbMessageHandler = lbMessageHandler;
     }
 
     public void initSocket() {
@@ -58,8 +59,10 @@ public class NodeHandler implements Callable<Void> {
                         this.stop();
                     }
 
-                    log.debug("Received JSON: {}", inputJSON);
-                    messageHandler.handleMessage(deserializeMessage(Objects.requireNonNull(inputJSON)));
+                    lbMessageHandler.handleMessage(
+                            deserializeMessage(Objects.requireNonNull(inputJSON)),
+                            this
+                    );
                 }
             } catch (SocketTimeoutException e) {
                 log.debug("No message was received for 30 seconds, closing connection...");
