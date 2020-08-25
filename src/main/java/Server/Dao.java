@@ -1,15 +1,16 @@
 package Server;
 
-import Utils.Tuple2;
-
-import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 
 public interface Dao<T> {
-    HashMap<String, Tuple2<Integer, String>> getAllJobsResults();
+    Optional<T> get(long id);
 
-    Tuple2<Integer, String> getJobData();
+    List<T> getAll();
 
-    void deleteJob(String jobId);
+    void save(T t);
 
-    void updateJob(String jobId);
+    void update(T t, String[] params);
+
+    void delete(T t);
 }
