@@ -1,8 +1,10 @@
 package Server.LoadBalancer;
 
+import Server.Job;
 import Server.Message;
 import Server.MessageHandler;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -10,8 +12,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Type;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -55,7 +59,7 @@ public class NodeHandler implements Callable<Void> {
                     }
 
                     log.debug("Received JSON: {}", inputJSON);
-                    messageHandler.handleMessage(new Gson().fromJson(inputJSON, Message.class));
+                    messageHandler.handleMessage(deserializeMessage(Objects.requireNonNull(inputJSON)));
                 }
             } catch (SocketTimeoutException e) {
                 log.debug("No message was received for 30 seconds, closing connection...");
@@ -100,5 +104,20 @@ public class NodeHandler implements Callable<Void> {
         this.read();
         this.write(new Message<>(200, Message.MessageType.INFO, -1));
         return null;
+    }
+
+    // TODO try to find something that is 'smarter' than this
+    private <T> Message<T> deserializeMessage(String json) {
+        if (json.contains("INFO")) {
+            log.info("Message contains INFO");
+            Type infoType = new TypeToken<Message<Integer>>() { }.getType();
+            return new Gson().fromJson(json, infoType);
+        } else if (json.contains("JOB")) {
+            log.info("Message contains JOB");
+            Type jobType = new TypeToken<Message<Job>>() { }.getType();
+            return new Gson().fromJson(json, jobType);
+        } else {
+            return null;
+        }
     }
 }

@@ -1,5 +1,5 @@
 package Server;
 
 public interface MessageHandler {
-    void handleMessage(Message<?> message);
+    <T> void handleMessage(Message<T> message);
 }

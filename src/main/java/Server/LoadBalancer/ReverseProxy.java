@@ -1,14 +1,19 @@
 package Server.LoadBalancer;
 
+import Server.Job;
 import Server.Message;
 import Server.MessageHandler;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -16,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ReverseProxy implements MessageHandler {
     private final int listeningPort;
     private final ArrayList<NodeHandler> clients;
+    private final Deque<Job> globalJobDeque;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final ExecutorService incomingConnectionsExecutor = Executors.newFixedThreadPool(5);
 
@@ -25,6 +31,7 @@ public class ReverseProxy implements MessageHandler {
     public ReverseProxy(int listeningPort) {
         this.listeningPort = listeningPort;
         this.clients = new ArrayList<>();
+        this.globalJobDeque = new ArrayDeque<>();
     }
 
     public void stop() {
@@ -61,14 +68,20 @@ public class ReverseProxy implements MessageHandler {
     }
 
     @Override
-    public void handleMessage(Message<?> message) {
+    public <T> void handleMessage(Message<T> message) {
         log.debug("Message Status: {}", message.status);
         switch (message.messageType) {
             case JOB:
-                log.debug("Received job from node.");
-                // TODO add job to global queue
+                log.info("Received job from node.");
+                log.debug("Message status: {}, type: {}, payload: {}",
+                        message.status,
+                        message.messageType,
+                        message.payload
+                );
+                this.globalJobDeque.addLast((Job) message.payload);
+                log.debug("Current number of jobs to dispatch: {}", this.globalJobDeque.size());
             case INFO:
-                log.debug("Received info on node's queue");
+                log.info("Received info on node's queue");
                 // TODO update node's table
         }
     }

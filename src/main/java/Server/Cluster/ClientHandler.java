@@ -37,7 +37,6 @@ public class ClientHandler implements Runnable {
         printWriter.flush();
         boolean isDone = false;
         String line;
-        int milliseconds;
         while (!isDone) {
             printWriter.print("Milliseconds: ");
             printWriter.flush();

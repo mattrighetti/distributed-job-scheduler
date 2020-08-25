@@ -67,7 +67,7 @@ public class LoadBalancerHandler implements Callable<Void> {
     }
 
     public void write(Message<?> message) {
-        log.info("Writing message to outputStream");
+        log.info("Writing {} to outputStream", message);
         String json = new Gson().toJson(message);
         try {
             this.outputStreamWriter.write(json + '\n');
@@ -97,7 +97,6 @@ public class LoadBalancerHandler implements Callable<Void> {
     public Void call() throws Exception {
         initSocket();
         read();
-        write(new Message<>(200, Message.MessageType.INFO, 2000));
         return null;
     }
 }

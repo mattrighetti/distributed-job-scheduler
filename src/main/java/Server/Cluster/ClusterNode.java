@@ -1,7 +1,10 @@
 package Server.Cluster;
 
+import Server.Job;
 import Server.Message;
 import Server.MessageHandler;
+import Utils.HashGenerator;
+import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -12,9 +15,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static Server.Message.MessageType.JOB;
+
 public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     private LoadBalancerHandler loadBalancerHandler;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
+    private final Gson json = new Gson();
     private final ExecutorService executorService = Executors.newFixedThreadPool(3);
 
     private static final Logger log = LogManager.getLogger(ClusterNode.class.getName());
@@ -49,28 +55,25 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     }
 
     @Override
-    public void handleMessage(Message<?> message) {
+    public <T> void handleMessage(Message<T> message) {
         switch (message.messageType) {
             case INFO:
-                log.info("Received info from server");
+                log.info("Received Dick info from server");
+                log.debug("Message: {}", message);
                 // TODO print info message (?) this is probably never going to be needed
             case JOB:
                 log.info("Received job from server");
+                log.debug("Message: {}", message);
                 // TODO add job to executor queue
         }
     }
 
     @Override
     public String handleJobSubmission(int milliseconds) {
-        int count = 16;
-        final String ALPHA_NUMERIC_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder builder = new StringBuilder();
-        while (count-- != 0) {
-            int character = (int)(Math.random()*ALPHA_NUMERIC_STRING.length());
-            builder.append(ALPHA_NUMERIC_STRING.charAt(character));
-        }
-        // TODO forward job to ReverseProxy with ticket hash so that it can be retrieved at will
-        return builder.toString();
+        String ticketHash = HashGenerator.generateHash(16);
+        Message<Job> jobMessage = new Message<>(200, JOB, new Job(ticketHash, milliseconds));
+        loadBalancerHandler.write(jobMessage);
+        return ticketHash;
     }
 
     public static void main(String[] args) {
