@@ -3,17 +3,15 @@ package Server.LoadBalancer;
 import Server.Job;
 import Server.LBMessageHandler;
 import Server.Message;
-import Server.MessageHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -22,6 +20,7 @@ public class ReverseProxy implements LBMessageHandler {
     private final int listeningPort;
     private final Map<NodeHandler, Integer> nodesInfo;
     private final Deque<Job> globalJobDeque;
+    private final Timer timer;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final ExecutorService incomingConnectionsExecutor = Executors.newFixedThreadPool(5);
 
@@ -31,7 +30,8 @@ public class ReverseProxy implements LBMessageHandler {
     public ReverseProxy(int listeningPort) {
         this.listeningPort = listeningPort;
         this.nodesInfo = new ConcurrentHashMap<>();
-        this.globalJobDeque = new ArrayDeque<>();
+        this.globalJobDeque = new ConcurrentLinkedDeque<>();
+        this.timer = new Timer();
     }
 
     public void stop() {
@@ -54,6 +54,7 @@ public class ReverseProxy implements LBMessageHandler {
                     nodeHandler = new NodeHandler(clientSocket, this);
 
                     nodesInfo.put(nodeHandler, -1);
+                    log.debug("Added new node {} to nodesInfo CHashMap", nodeHandler);
                     this.incomingConnectionsExecutor.submit(nodeHandler);
                 }
             } catch (IOException e) {
@@ -87,6 +88,21 @@ public class ReverseProxy implements LBMessageHandler {
         }
     }
 
+    public void dispatch(int period) {
+        TimerTask dispatchTask = new TimerTask() {
+            @Override
+            public void run() {
+                if (nodesInfo.isEmpty()) {
+                    log.debug("No node is connected at the moment, can't dispatch jobs.");
+                } else {
+                    log.debug("Nodes available: {}", nodesInfo.keySet());
+                }
+            }
+        };
+
+        timer.schedule(dispatchTask, 0, period);
+    }
+
     public static void main(String[] args) {
         ReverseProxy reverseProxy;
         if (args.length > 1) {
@@ -96,5 +112,6 @@ public class ReverseProxy implements LBMessageHandler {
         }
 
         reverseProxy.openSocket();
+        reverseProxy.dispatch(5000);
     }
 }

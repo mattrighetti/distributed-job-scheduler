@@ -123,4 +123,9 @@ public class NodeHandler implements Callable<Void> {
             return null;
         }
     }
+
+    @Override
+    public String toString() {
+        return this.clientSocket.getRemoteSocketAddress().toString();
+    }
 }
