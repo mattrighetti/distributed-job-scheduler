@@ -66,7 +66,6 @@ public class ReverseProxy implements LBMessageHandler {
 
     @Override
     public <T> void handleMessage(Message<T> message, NodeHandler nodeHandler) {
-        log.debug("Message Status: {}", message.status);
         switch (message.messageType) {
             case JOB:
                 log.info("Received job from node.");
@@ -77,6 +76,7 @@ public class ReverseProxy implements LBMessageHandler {
                 );
                 this.globalJobDeque.addLast((Job) message.payload);
                 log.debug("Current number of jobs to dispatch: {}", this.globalJobDeque.size());
+                break;
             case INFO:
                 log.info("Received info on node's queue");
                 log.debug("Message status: {}, type: {}, payload: {}",
@@ -85,6 +85,7 @@ public class ReverseProxy implements LBMessageHandler {
                         message.payload
                 );
                 nodesInfo.put(nodeHandler, (int) message.payload);
+                break;
         }
     }
 
