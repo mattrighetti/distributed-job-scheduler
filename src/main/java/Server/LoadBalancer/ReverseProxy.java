@@ -3,6 +3,7 @@ package Server.LoadBalancer;
 import Server.Job;
 import Server.LBMessageHandler;
 import Server.Message;
+import Utils.Tuple2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,6 +16,9 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import static Server.Message.MessageType.JOB;
 
 public class ReverseProxy implements LBMessageHandler {
     private final int listeningPort;
@@ -89,19 +93,36 @@ public class ReverseProxy implements LBMessageHandler {
         }
     }
 
-    public void dispatch(int period) {
+    public void dispatch(int period, int maxNumOfJobs) {
         TimerTask dispatchTask = new TimerTask() {
             @Override
             public void run() {
                 if (nodesInfo.isEmpty()) {
                     log.debug("No node is connected at the moment, can't dispatch jobs.");
                 } else {
-                    log.debug("Nodes available: {}", nodesInfo.keySet());
+                    log.debug("Nodes available: {}", nodesInfo);
+                    if (!globalJobDeque.isEmpty()) {
+                        dispatchAlgorithm(Math.min(maxNumOfJobs, globalJobDeque.size()), nodesInfo);
+                    }
                 }
             }
         };
 
         timer.schedule(dispatchTask, 0, period);
+    }
+
+    public <T> void dispatchAlgorithm(int max, final Map<T, Integer> integerMap) {
+        List<Tuple2<Integer, T>> list = Dispatcher.convertNodesInfoToList(integerMap);
+        Dispatcher.applyAlgorithmFunction(max, (max_value) -> {
+            Job jobToDispatch;
+            while (max_value > 0) {
+                jobToDispatch = this.globalJobDeque.removeFirst();
+                ((NodeHandler) list.get(0).item2).write(new Message<>(200, JOB, jobToDispatch));
+                list.get(0).item1 += 1;
+                list.sort(Comparator.comparingInt(o -> o.item1));
+                max_value--;
+            }
+        });
     }
 
     public static void main(String[] args) {
@@ -113,6 +134,6 @@ public class ReverseProxy implements LBMessageHandler {
         }
 
         reverseProxy.openSocket();
-        reverseProxy.dispatch(5000);
+        reverseProxy.dispatch(10000, 20);
     }
 }
