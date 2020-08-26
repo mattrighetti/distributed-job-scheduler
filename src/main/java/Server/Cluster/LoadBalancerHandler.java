@@ -1,8 +1,10 @@
 package Server.Cluster;
 
+import Server.Job;
 import Server.Message;
 import Server.MessageHandler;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -10,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Type;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.Callable;
@@ -55,7 +58,9 @@ public class LoadBalancerHandler implements Callable<Void> {
                         this.stop();
                     }
                     log.debug("Read: {}", in);
-                    messageHandler.handleMessage(new Gson().fromJson(in, Message.class));
+
+                    Type jobType = new TypeToken<Message<Job>>() { }.getType();
+                    messageHandler.handleMessage(new Gson().fromJson(in, jobType));
                 }
             } catch (SocketTimeoutException e) {
                 log.debug("No message was received for 30 seconds, closing connection...");

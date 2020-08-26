@@ -105,7 +105,6 @@ public class NodeHandler implements Callable<Void> {
     public Void call() throws Exception {
         this.initSocket();
         this.read();
-        this.write(new Message<>(200, Message.MessageType.INFO, -1));
         return null;
     }
 
