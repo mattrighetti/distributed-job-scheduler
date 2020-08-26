@@ -90,7 +90,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
             case JOB:
                 log.info("Received job from server");
                 log.debug("Message: {}", message);
-                // TODO add job to executor queue
+                this.localJobDeque.add((Job) message.payload);
                 break;
         }
     }
