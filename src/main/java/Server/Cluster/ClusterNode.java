@@ -1,10 +1,10 @@
 package Server.Cluster;
 
+import Server.Executor;
 import Server.Job;
 import Server.Message;
 import Server.MessageHandler;
 import Utils.HashGenerator;
-import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,6 +27,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final Deque<Job> localJobDeque;
     private final Timer timer;
+    private final Executor executor;
     private final ExecutorService executorService = Executors.newFixedThreadPool(3);
 
     private static final Logger log = LogManager.getLogger(ClusterNode.class.getName());
@@ -34,6 +35,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     public ClusterNode() {
         this.localJobDeque = new ConcurrentLinkedDeque<>();
         this.timer = new Timer();
+        this.executor = new Executor(localJobDeque);
     }
 
     public void stop() {
@@ -79,6 +81,10 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         timer.schedule(jobQueueInfoTask, 0, 1000);
     }
 
+    public void runExecutor() {
+        this.executor.triggerTimerCheck(1000);
+    }
+
     @Override
     public <T> void handleMessage(Message<T> message) {
         switch (message.messageType) {
@@ -108,6 +114,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
             ClusterNode node = new ClusterNode();
             node.connect(args[0], Integer.parseInt(args[1]));
             node.sendJobQueueInfo();
+            node.runExecutor();
             node.listenForClientConnections(9000);
         } else {
             log.fatal("No hostname:port was given, exiting.");

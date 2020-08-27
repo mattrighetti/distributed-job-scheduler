@@ -15,7 +15,7 @@ public class Executor implements Runnable {
 
     private static final Logger log = LogManager.getLogger(Executor.class.getName());
 
-    public Executor(Deque<Job> jobDeque) {
+    public Executor(final Deque<Job> jobDeque) {
         this.jobDeque = jobDeque;
         this.timer = new Timer();
     }
@@ -47,16 +47,21 @@ public class Executor implements Runnable {
      */
     private void consume() {
         Future<String> future;
+        Job job;
+        String result;
         while (!jobDeque.isEmpty()) {
             try {
-                future = executor.submit(this.jobDeque.getFirst());
-                // TODO handle job completion ->
-                future.get();
+                job = this.jobDeque.removeFirst();
+                log.debug("Running {}", job);
+                future = executor.submit(job);
+                result = future.get();
+                log.debug(result);
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
         }
 
+        log.info("Queue is empty, starting timer.");
         triggerTimerCheck(1000);
     }
 
