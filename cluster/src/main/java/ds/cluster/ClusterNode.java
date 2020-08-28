@@ -1,6 +1,5 @@
 package ds.cluster;
 
-import ds.common.Executor;
 import ds.common.Job;
 import ds.common.Message;
 import ds.common.MessageHandler;
@@ -82,6 +81,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     }
 
     public void runExecutor() {
+        log.info("Running executor");
         this.executor.triggerTimerCheck(1000);
     }
 
@@ -95,7 +95,6 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
                 break;
             case JOB:
                 log.info("Received job from server");
-                log.debug("Message: {}", message);
                 this.localJobDeque.add((Job) message.payload);
                 break;
         }

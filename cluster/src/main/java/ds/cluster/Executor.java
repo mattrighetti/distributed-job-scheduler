@@ -1,5 +1,6 @@
-package ds.common;
+package ds.cluster;
 
+import ds.common.Job;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,13 +27,14 @@ public class Executor implements Runnable {
      * @param period number of milliseconds to wait before the task is repeatedly being executed.
      */
     public void triggerTimerCheck(int period) {
+        log.info("triggerTimerCheck");
         this.timer.schedule(new TimerTask() {
             @Override
             public void run() {
+                log.info("Running executor timer");
                 if (jobDeque.size() > 0) {
                     log.debug("Some jobs were found in the jobQue, starting consumer.");
                     consume();
-                    timer.cancel();
                 } else {
                     log.debug("jobDeque is empty.");
                 }
@@ -61,8 +63,7 @@ public class Executor implements Runnable {
             }
         }
 
-        log.info("Queue is empty, starting timer.");
-        triggerTimerCheck(1000);
+        log.info("Queue is empty, running timer again");
     }
 
     @Override

@@ -81,10 +81,11 @@ public class ReverseProxy implements LBMessageHandler {
                 break;
             case INFO:
                 log.info("Received info on node's queue");
-                log.debug("Message status: {}, type: {}, payload: {}",
+                log.debug("Message status: {}, type: {}, payload: {}, {}",
                         message.status,
                         message.messageType,
-                        message.payload
+                        message.payload,
+                        nodeHandler
                 );
                 nodesInfo.put(nodeHandler, (int) message.payload);
                 break;

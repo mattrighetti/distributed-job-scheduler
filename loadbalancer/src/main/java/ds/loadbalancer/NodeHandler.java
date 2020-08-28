@@ -73,7 +73,7 @@ public class NodeHandler implements Callable<Void> {
     }
 
     public void write(Message<?> message) {
-        log.info("Writing message to outputStream");
+        log.info("Writing message to outputStream {}", this);
         String json = new Gson().toJson(message);
         try {
             this.outputStreamWriter.write(json + '\n');
