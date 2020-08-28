@@ -30,6 +30,7 @@ public class FaultToleranceTest {
         Job test2 = fileStorage.readObjFromFile();
 
         Assertions.assertEquals(true,test1.getJobId().equals(test2.getJobId()));
+        Assertions.assertEquals(true,test1.equals(test2));
 
     }
 
@@ -45,6 +46,5 @@ public class FaultToleranceTest {
             fileStorage.writeObjToFile(jobQueue.get(i));
         }
     }
-
 
 }

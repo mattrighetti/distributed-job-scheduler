@@ -25,6 +25,14 @@ public class Job implements Callable<String>, Serializable {
                 '}';
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if(!(obj instanceof Job)) {
+            return false;
+        }
+        return ((Job) obj).jobId.equals(this.jobId) && ((Job) obj).milliseconds == this.milliseconds;
+    }
+
     public String getJobId() {
         return jobId;
     }
