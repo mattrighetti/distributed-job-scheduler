@@ -3,11 +3,11 @@ package ds.common.FaultTolerance;
 import java.io.*;
 import java.nio.file.Path;
 
-public class ObjectSerializer implements Serializable {
+public class FileStorage {
     Path path;
     String filepath;
 
-    public ObjectSerializer() {
+    public FileStorage() {
         filepath = path.toString();
     }
 
