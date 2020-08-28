@@ -83,6 +83,14 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
+                            <archive>
+                                <manifestEntries>
+                                    <Multi-Release>true</Multi-Release>
+                                </manifestEntries>
+                                <manifest>
+                                    <mainClass>ds.loadbalancer.App</mainClass>
+                                </manifest>
+                            </archive>
                             <descriptors>src/main/assembly/lb-assembly.xml</descriptors>
                         </configuration>
                     </execution>
