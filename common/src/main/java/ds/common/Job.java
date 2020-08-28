@@ -15,4 +15,12 @@ public class Job implements Callable<String> {
         Thread.sleep(this.milliseconds);
         return "Executed Job[" + this.jobId + "] for " + this.milliseconds + " milliseconds";
     }
+
+    @Override
+    public String toString() {
+        return "Job{" +
+                "jobId='" + jobId + '\'' +
+                ", milliseconds=" + milliseconds +
+                '}';
+    }
 }

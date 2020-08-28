@@ -15,4 +15,13 @@ public class Message<T> {
         this.messageType = messageType;
         this.payload = payload;
     }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "status=" + status +
+                ", messageType=" + messageType +
+                ", payload=" + payload +
+                '}';
+    }
 }
