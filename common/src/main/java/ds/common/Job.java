@@ -1,8 +1,9 @@
 package ds.common;
 
+import java.io.Serializable;
 import java.util.concurrent.Callable;
 
-public class Job implements Callable<String> {
+public class Job implements Callable<String>, Serializable {
     public final String jobId;
     public final int milliseconds;
 
@@ -22,5 +23,9 @@ public class Job implements Callable<String> {
                 "jobId='" + jobId + '\'' +
                 ", milliseconds=" + milliseconds +
                 '}';
+    }
+
+    public String getJobId() {
+        return jobId;
     }
 }

@@ -1,13 +1,16 @@
 package ds.common.FaultTolerance;
 
+
 import java.io.*;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FileStorage {
     Path path;
     String filepath;
 
     public FileStorage() {
+        path = Paths.get("C:\\Users\\Utente\\Documents\\GitHub\\distributed-job-scheduler\\FileStorage\\StorageFile");
         filepath = path.toString();
     }
 
@@ -17,7 +20,7 @@ public class FileStorage {
             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
             objectOut.writeObject(objectToSerialize);
             objectOut.close();
-            System.out.println("The Object was succesfully written to a file");
+            System.out.println("The Object was successfully written to a file");
         }
         catch (Exception ex) {
             ex.printStackTrace();
@@ -37,6 +40,6 @@ public class FileStorage {
             ex.printStackTrace();
             return null;
         }
-
     }
+
 }
