@@ -2,8 +2,8 @@ package ds.common;
 
 import org.junit.Test;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -19,7 +19,7 @@ public class FileStorageTest {
 
         try {
             FileStorage.writeObjToFile(test, "./file1", true);
-            readTest = FileStorage.readObjFromFile("./file1", true);
+            readTest = (Job) FileStorage.readObjFromFile("./file1", true).get();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -35,12 +35,12 @@ public class FileStorageTest {
 
         try {
             FileStorage.writeObjToFile(test1, "./file2", true);
-            test2 = FileStorage.readObjFromFile("./file2", true);
+            test2 = (Job) FileStorage.readObjFromFile("./file2", true).get();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        assertEquals(test2.getJobId(), test1.getJobId());
+        assertEquals(Objects.requireNonNull(test2).getJobId(), test1.getJobId());
         assertEquals(test2, test1);
     }
 
