@@ -1,8 +1,9 @@
 package ds.common;
 
+import java.io.Serializable;
 import java.util.concurrent.Callable;
 
-public class Job implements Callable<String> {
+public class Job implements Callable<String>, Serializable {
     public final String jobId;
     public final int milliseconds;
 
@@ -22,5 +23,17 @@ public class Job implements Callable<String> {
                 "jobId='" + jobId + '\'' +
                 ", milliseconds=" + milliseconds +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(!(obj instanceof Job)) {
+            return false;
+        }
+        return ((Job) obj).jobId.equals(this.jobId) && ((Job) obj).milliseconds == this.milliseconds;
+    }
+
+    public String getJobId() {
+        return jobId;
     }
 }
