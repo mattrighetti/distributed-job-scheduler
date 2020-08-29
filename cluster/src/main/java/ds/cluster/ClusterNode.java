@@ -10,9 +10,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Deque;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,6 +23,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     private LoadBalancerHandler loadBalancerHandler;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final Deque<Job> localJobDeque;
+    private final Map<String, String> resultsMap;
     private final Timer timer;
     private final Executor executor;
     private final ExecutorService executorService = Executors.newFixedThreadPool(3);
@@ -33,8 +32,9 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
 
     public ClusterNode() {
         this.localJobDeque = new ConcurrentLinkedDeque<>();
+        this.resultsMap = new HashMap<>();
         this.timer = new Timer();
-        this.executor = new Executor(localJobDeque);
+        this.executor = new Executor(localJobDeque, resultsMap);
     }
 
     public void stop() {

@@ -4,6 +4,7 @@ import ds.common.Job;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Map;
 import java.util.Timer;
 import java.util.Deque;
 import java.util.TimerTask;
@@ -11,13 +12,15 @@ import java.util.concurrent.*;
 
 public class Executor implements Runnable {
     private final Deque<Job> jobDeque;
+    private final Map<String, String> resultsMap;
     private final Timer timer;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private static final Logger log = LogManager.getLogger(Executor.class.getName());
 
-    public Executor(final Deque<Job> jobDeque) {
+    public Executor(final Deque<Job> jobDeque, final Map<String, String> resultsMap) {
         this.jobDeque = jobDeque;
+        this.resultsMap = resultsMap;
         this.timer = new Timer();
     }
 
@@ -57,7 +60,8 @@ public class Executor implements Runnable {
                 log.debug("Running {}", job);
                 future = executor.submit(job);
                 result = future.get();
-                log.debug(result);
+                log.debug("Writing result to Map -> {}", result);
+                resultsMap.put(job.jobId, result);
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }

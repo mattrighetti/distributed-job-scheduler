@@ -5,8 +5,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FileStorageTest {
     ArrayList<Job> jobQueue;
@@ -45,8 +44,8 @@ public class FileStorageTest {
     }
 
     @Test
-    public void eReadTest() {
-        assertThrows(Exception.class, () -> FileStorage.readObjFromFile("./this-file-does-not-exist", true));
+    public void eReadTestFailure() {
+        assertFalse(FileStorage.readObjFromFile("./this-file-does-not-exist", true).isPresent());
     }
 
     @Test
