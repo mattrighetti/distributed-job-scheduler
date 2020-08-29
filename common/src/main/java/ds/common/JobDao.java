@@ -5,7 +5,15 @@ import java.util.List;
 import java.util.Optional;
 
 public class JobDao implements Dao<Job> {
-    private List<Job> jobs = new ArrayList<>();
+    private final List<Job> jobs;
+
+    public JobDao(List<Job> jobs) {
+        this.jobs = readFromFile("./jobs");
+    }
+
+    private ArrayList<Job> readFromFile(String filepath) {
+        return null;
+    }
 
     @Override
     public Optional<Job> get(long id) {
@@ -20,11 +28,6 @@ public class JobDao implements Dao<Job> {
     @Override
     public void save(Job job) {
         jobs.add(job);
-    }
-
-    @Override
-    public void update(Job job, String[] params) {
-        // TODO update job (is it needed?)
     }
 
     @Override

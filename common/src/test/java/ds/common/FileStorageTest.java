@@ -1,48 +1,67 @@
 package ds.common;
 
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 public class FileStorageTest {
-    FileStorage fileStorage;
     ArrayList<Job> jobQueue;
 
     @Test
     public void writeOneObject() {
-        fileStorage = new FileStorage();
         jobQueue = new ArrayList<>();
-
         Job test = new Job("jobID", 5000);
+        Job readTest = null;
 
+        try {
+            FileStorage.writeObjToFile(test, "./file1", true);
+            readTest = FileStorage.readObjFromFile("./file1", true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        fileStorage.writeObjToFile(test);
+        assertEquals(test, readTest);
     }
 
     @Test
     public void readOneObject() {
-        fileStorage = new FileStorage();
         jobQueue = new ArrayList<>();
-
         Job test1 = new Job("jobID", 5000);
-        fileStorage.writeObjToFile(test1);
-        Job test2 = fileStorage.readObjFromFile();
+        Job test2 = null;
 
-        Assertions.assertEquals(test2.getJobId(), test1.getJobId());
-        Assertions.assertEquals(test2, test1);
+        try {
+            FileStorage.writeObjToFile(test1, "./file2", true);
+            test2 = FileStorage.readObjFromFile("./file2", true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        assertEquals(test2.getJobId(), test1.getJobId());
+        assertEquals(test2, test1);
+    }
+
+    @Test
+    public void eReadTest() {
+        assertThrows(Exception.class, () -> FileStorage.readObjFromFile("./this-file-does-not-exist", true));
     }
 
     @Test
     public void stressTest() {
-        fileStorage = new FileStorage();
         jobQueue = new ArrayList<>();
         for (int i = 0; i < 700; i++) {
             Job test = new Job(Integer.toString(i), 5000);
             jobQueue.add(test);
         }
         for (int i = 0; i < 700; i++) {
-            fileStorage.writeObjToFile(jobQueue.get(i));
+            try {
+                FileStorage.writeObjToFile(jobQueue.get(i), "./file3", false);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

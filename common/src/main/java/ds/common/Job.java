@@ -1,6 +1,7 @@
 package ds.common;
 
 import java.io.Serializable;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 public class Job implements Callable<String>, Serializable {
@@ -34,6 +35,6 @@ public class Job implements Callable<String>, Serializable {
     }
 
     public String getJobId() {
-        return jobId;
+        return Objects.requireNonNull(jobId, "No Job ID was found");
     }
 }

@@ -2,11 +2,18 @@ package ds.common;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 public class ResultDao implements Dao<Result> {
-    private List<Result> results = new ArrayList<>();
+    private final List<Result> results;
+
+    public ResultDao(List<Result> results) {
+        this.results = readFromFile("./results");
+    }
+
+    private ArrayList<Result> readFromFile(String filePath) {
+        return null;
+    }
 
     @Override
     public Optional<Result> get(long id) {
@@ -20,13 +27,6 @@ public class ResultDao implements Dao<Result> {
 
     @Override
     public void save(Result result) {
-        results.add(result);
-    }
-
-    @Override
-    public void update(Result result, String[] params) {
-        result.setJobId(Objects.requireNonNull(params[0], "Hash cannot be null"));
-        result.setResultValue(Objects.requireNonNull(params[1], "Result cannot be null"));
         results.add(result);
     }
 

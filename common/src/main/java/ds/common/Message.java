@@ -3,7 +3,8 @@ package ds.common;
 public class Message<T> {
     public enum MessageType {
         JOB,
-        INFO
+        INFO,
+        RESULT
     }
 
     public final int status;
