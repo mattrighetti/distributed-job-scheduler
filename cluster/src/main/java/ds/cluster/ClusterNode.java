@@ -51,14 +51,14 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         }
     }
 
-    public void listenForClientConnections(int port) {
+    public void listenForClientConnections(int port, boolean enablePiping) {
         try {
             ServerSocket serverSocket = new ServerSocket(port);
             Socket clientSocket;
             while (!this.isStopped.get()) {
                 clientSocket = serverSocket.accept();
                 log.debug("Received connection from {}", clientSocket.getInetAddress());
-                this.executorService.execute(new ClientHandler(clientSocket, this));
+                this.executorService.execute(new ClientHandler(clientSocket, this, enablePiping));
             }
         } catch (IOException e) {
             log.error("Encountered error while listening for clients.");

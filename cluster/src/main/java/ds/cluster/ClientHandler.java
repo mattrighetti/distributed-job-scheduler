@@ -10,6 +10,7 @@ import java.util.Scanner;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ClientHandler implements Runnable {
+    private final boolean enablePiping;
     private final Socket socket;
     private Scanner scanner;
     private PrintWriter printWriter;
@@ -17,7 +18,8 @@ public class ClientHandler implements Runnable {
 
     private static final Logger log = LogManager.getLogger(ClientHandler.class.getName());
 
-    public ClientHandler(Socket socket, ClientSubmissionHandler clientSubmissionHandler) {
+    public ClientHandler(Socket socket, ClientSubmissionHandler clientSubmissionHandler, boolean enablePiping) {
+        this.enablePiping = enablePiping;
         this.socket = socket;
         this.clientSubmissionHandler = clientSubmissionHandler;
     }
@@ -33,17 +35,21 @@ public class ClientHandler implements Runnable {
     }
 
     void askRoutine() {
-        printWriter.println("Please submit the number of ms you would like to submit or write 'exit' to quit");
-        printWriter.flush();
+        if (!enablePiping) {
+            printWriter.println("Please submit the number of ms you would like to submit or write 'exit' to quit");
+            printWriter.flush();
+        }
         boolean isDone = false;
         String line;
         while (!isDone) {
-            printWriter.print("Milliseconds: ");
-            printWriter.flush();
+            if (!enablePiping) {
+                printWriter.print("Milliseconds: ");
+                printWriter.flush();
+            }
             line = scanner.nextLine();
             log.debug("Client entered '{}'", line);
 
-            if (line.toLowerCase().trim().equals("exit")) {
+            if (line == null || line.toLowerCase().trim().equals("exit")) {
                 isDone = true;
             } else {
                 try {
