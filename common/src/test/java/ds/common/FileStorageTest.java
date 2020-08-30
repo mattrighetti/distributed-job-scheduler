@@ -1,7 +1,9 @@
 package ds.common;
 
+import org.junit.AfterClass;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -17,8 +19,8 @@ public class FileStorageTest {
         Job readTest = null;
 
         try {
-            FileStorage.writeObjToFile(test, "./file1", true);
-            readTest = (Job) FileStorage.readObjFromFile("./file1", true).get();
+            FileStorage.writeObjToFile(test, "./target/file1", true);
+            readTest = (Job) FileStorage.readObjFromFile("./target/file1", true).get();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -33,8 +35,8 @@ public class FileStorageTest {
         Job test2 = null;
 
         try {
-            FileStorage.writeObjToFile(test1, "./file2", true);
-            test2 = (Job) FileStorage.readObjFromFile("./file2", true).get();
+            FileStorage.writeObjToFile(test1, "./target/file2", true);
+            test2 = (Job) FileStorage.readObjFromFile("./target/file2", true).get();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -45,7 +47,7 @@ public class FileStorageTest {
 
     @Test
     public void eReadTestFailure() {
-        assertFalse(FileStorage.readObjFromFile("./this-file-does-not-exist", true).isPresent());
+        assertFalse(FileStorage.readObjFromFile("./target/this-file-does-not-exist", true).isPresent());
     }
 
     @Test
@@ -57,9 +59,20 @@ public class FileStorageTest {
         }
         for (int i = 0; i < 700; i++) {
             try {
-                FileStorage.writeObjToFile(jobQueue.get(i), "./file3", false);
+                FileStorage.writeObjToFile(jobQueue.get(i), "./target/file3", false);
             } catch (Exception e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    @AfterClass
+    public static void clean() {
+        File dir = new File("./target/");
+        for (File file : dir.listFiles()) {
+            if (file.getName().contains("file")) {
+                System.out.println("Deleting " + file.getName());
+                file.delete();
             }
         }
     }
