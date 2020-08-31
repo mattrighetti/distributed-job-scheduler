@@ -1,9 +1,8 @@
 package ds.loadbalancer;
 
-import ds.common.Job;
 import ds.common.Message;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import ds.common.Utils.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,10 +10,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Type;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -50,17 +47,14 @@ public class NodeHandler implements Callable<Void> {
         this.executorService.execute(() -> {
             try {
                 while (!this.isStopped.get()) {
-                    String inputJSON = this.bufferedReader.readLine();
+                    String jsonData = this.bufferedReader.readLine();
 
-                    if (inputJSON == null) {
+                    if (jsonData == null) {
                         log.debug("Received null, closing socket.");
                         this.stop();
                     }
 
-                    lbMessageHandler.handleMessage(
-                            deserializeMessage(Objects.requireNonNull(inputJSON)),
-                            this
-                    );
+                    lbMessageHandler.handleMessage(deserializeMessage(jsonData), this);
                 }
             } catch (SocketTimeoutException e) {
                 log.debug("No message was received for 30 seconds, closing connection...");
@@ -106,19 +100,8 @@ public class NodeHandler implements Callable<Void> {
         return null;
     }
 
-    // TODO try to find something that is 'smarter' than this
-    private <T> Message<T> deserializeMessage(String json) {
-        if (json.contains("INFO")) {
-            log.info("Message contains INFO");
-            Type infoType = new TypeToken<Message<Integer>>() { }.getType();
-            return new Gson().fromJson(json, infoType);
-        } else if (json.contains("JOB")) {
-            log.info("Message contains JOB");
-            Type jobType = new TypeToken<Message<Job>>() { }.getType();
-            return new Gson().fromJson(json, jobType);
-        } else {
-            return null;
-        }
+    private Message<?> deserializeMessage(String json) {
+        return GsonUtils.shared.fromJson(json, Message.class);
     }
 
     @Override

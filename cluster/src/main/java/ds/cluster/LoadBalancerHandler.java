@@ -5,6 +5,7 @@ import ds.common.Message;
 import ds.common.MessageHandler;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import ds.common.Utils.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -49,18 +50,17 @@ public class LoadBalancerHandler implements Callable<Void> {
     public void read() {
         this.executorService.execute(() -> {
             try {
-                String in;
+                String jsonData;
                 log.info("Reading from inputStream...");
                 while (!this.isStopped.get()) {
-                    in = this.bufferedReader.readLine();
-                    if (in == null) {
+                    jsonData = this.bufferedReader.readLine();
+                    if (jsonData == null) {
                         log.debug("Received null, closing socket.");
                         this.stop();
                     }
-                    log.debug("Read: {}", in);
+                    log.debug("Read: {}", jsonData);
 
-                    Type jobType = new TypeToken<Message<Job>>() { }.getType();
-                    messageHandler.handleMessage(new Gson().fromJson(in, jobType));
+                    messageHandler.handleMessage(deserializeMessage(jsonData));
                 }
             } catch (SocketTimeoutException e) {
                 log.debug("No message was received for 30 seconds, closing connection...");
@@ -96,6 +96,10 @@ public class LoadBalancerHandler implements Callable<Void> {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private Message<?> deserializeMessage(String json) {
+        return GsonUtils.shared.fromJson(json, Message.class);
     }
 
     @Override
