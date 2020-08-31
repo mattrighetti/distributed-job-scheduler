@@ -69,7 +69,7 @@ public class FileStorageTest {
     @AfterClass
     public static void clean() {
         File dir = new File("./target/");
-        for (File file : dir.listFiles()) {
+        for (File file : Objects.requireNonNull(dir.listFiles())) {
             if (file.getName().contains("file")) {
                 System.out.println("Deleting " + file.getName());
                 file.delete();
