@@ -111,6 +111,8 @@ public class ReverseProxy implements LBMessageHandler {
                 message.messageType,
                 message.payload
         );
+
+        jobResults.put(message.payload.jobId, Optional.empty());
         globalJobDeque.addLast(message.payload);
         log.debug("Current number of jobs to dispatch: {}", this.globalJobDeque.size());
     }
