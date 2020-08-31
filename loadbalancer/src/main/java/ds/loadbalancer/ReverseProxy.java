@@ -94,7 +94,7 @@ public class ReverseProxy implements LBMessageHandler {
     }
 
     private void handleInfoMessage(Message<Integer> message, NodeHandler nodeHandler) {
-        log.info("Received info on node's queue");
+        log.info("Received info from {}", nodeHandler);
         log.debug("Message status: {}, type: {}, payload: {}, {}",
                 message.status,
                 message.messageType,
@@ -105,7 +105,7 @@ public class ReverseProxy implements LBMessageHandler {
     }
 
     private void handleJobMessage(Message<Job> message, NodeHandler nodeHandler) {
-        log.info("Received job from node.");
+        log.info("Received job from {}", nodeHandler);
         log.debug("Message status: {}, type: {}, payload: {}",
                 message.status,
                 message.messageType,
@@ -117,8 +117,8 @@ public class ReverseProxy implements LBMessageHandler {
         log.debug("Current number of jobs to dispatch: {}", this.globalJobDeque.size());
     }
 
-    private void handleResultMessage(Message<List<Tuple2<String, String>>> message) {
-        log.info("Received result from node.");
+    private void handleResultMessage(Message<List<Tuple2<String, String>>> message, NodeHandler nodeHandler) {
+        log.info("Received result from {}", nodeHandler);
         log.debug("Message status: {}, type: {}, payload: {}",
                 message.status,
                 message.messageType,
@@ -129,7 +129,7 @@ public class ReverseProxy implements LBMessageHandler {
     }
 
     private void handleResultRequestsMessage(Message<List<String>> message, NodeHandler nodeHandler) {
-        log.info("Received result request from node.");
+        log.info("Received result request from {}", nodeHandler);
         log.debug("Message status: {}, type: {}, payload: {}",
                 message.status,
                 message.messageType,
@@ -141,7 +141,7 @@ public class ReverseProxy implements LBMessageHandler {
 
     private void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> message,
                                    NodeHandler nodeHandler) {
-        log.info("Received result + request from node.");
+        log.info("Received result + request from {}", nodeHandler);
         log.debug("Message status: {}, type: {}, payload: {}",
                 message.status,
                 message.messageType,
