@@ -21,6 +21,8 @@ import static ds.common.Message.MessageType.JOB;
 public class ReverseProxy implements LBMessageHandler {
     private final int listeningPort;
     private final Map<NodeHandler, Integer> nodesInfo;
+    private final Map<String, String> jobResults;
+    private final Map<NodeHandler, List<String>> nodeResultRequests;
     private final Deque<Job> globalJobDeque;
     private final Timer timer;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
@@ -28,10 +30,11 @@ public class ReverseProxy implements LBMessageHandler {
 
     private static final Logger log = LogManager.getLogger(ReverseProxy.class.getName());
 
-
     public ReverseProxy(int listeningPort) {
         this.listeningPort = listeningPort;
         this.nodesInfo = new ConcurrentHashMap<>();
+        this.jobResults = new ConcurrentHashMap<>();
+        this.nodeResultRequests = new ConcurrentHashMap<>();
         this.globalJobDeque = new ConcurrentLinkedDeque<>();
         this.timer = new Timer();
     }
@@ -66,30 +69,83 @@ public class ReverseProxy implements LBMessageHandler {
         });
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> void handleMessage(Message<T> message, NodeHandler nodeHandler) {
         switch (message.messageType) {
-            case JOB:
-                log.info("Received job from node.");
-                log.debug("Message status: {}, type: {}, payload: {}",
-                        message.status,
-                        message.messageType,
-                        message.payload
-                );
-                this.globalJobDeque.addLast((Job) message.payload);
-                log.debug("Current number of jobs to dispatch: {}", this.globalJobDeque.size());
-                break;
             case INFO:
-                log.info("Received info on node's queue");
-                log.debug("Message status: {}, type: {}, payload: {}, {}",
-                        message.status,
-                        message.messageType,
-                        message.payload,
-                        nodeHandler
-                );
-                nodesInfo.put(nodeHandler, (int) message.payload);
+                handleInfoMessage((Message<Integer>) message, nodeHandler);
+                break;
+            case JOB:
+                handleJobMessage((Message<Job>) message, nodeHandler);
+                break;
+            case RESULT:
+                handleResultMessage((Message<List<Tuple2<String, String>>>) message);
+                break;
+            case RES_REQ:
+                handleMixedMessage((Message<Tuple2<List<Tuple2<String, String>>, List<String>>>) message, nodeHandler);
+                break;
+            case REQUEST_OF_RES:
+                handleResultRequestsMessage((Message<List<String>>) message, nodeHandler);
                 break;
         }
+    }
+
+    public void handleInfoMessage(Message<Integer> message, NodeHandler nodeHandler) {
+        log.info("Received info on node's queue");
+        log.debug("Message status: {}, type: {}, payload: {}, {}",
+                message.status,
+                message.messageType,
+                message.payload,
+                nodeHandler
+        );
+        nodesInfo.put(nodeHandler, message.payload);
+    }
+
+    public void handleJobMessage(Message<Job> message, NodeHandler nodeHandler) {
+        log.info("Received job from node.");
+        log.debug("Message status: {}, type: {}, payload: {}",
+                message.status,
+                message.messageType,
+                message.payload
+        );
+        globalJobDeque.addLast(message.payload);
+        log.debug("Current number of jobs to dispatch: {}", this.globalJobDeque.size());
+    }
+
+    public void handleResultMessage(Message<List<Tuple2<String, String>>> message) {
+        log.info("Received result from node.");
+        log.debug("Message status: {}, type: {}, payload: {}",
+                message.status,
+                message.messageType,
+                message.payload
+        );
+
+        message.payload.forEach(tuple -> jobResults.put(tuple.item1, tuple.item2));
+    }
+
+    public void handleResultRequestsMessage(Message<List<String>> message, NodeHandler nodeHandler) {
+        log.info("Received result request from node.");
+        log.debug("Message status: {}, type: {}, payload: {}",
+                message.status,
+                message.messageType,
+                message.payload
+        );
+
+        nodeResultRequests.put(nodeHandler, message.payload);
+    }
+
+    public void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> message,
+                                   NodeHandler nodeHandler) {
+        log.info("Received result + request from node.");
+        log.debug("Message status: {}, type: {}, payload: {}",
+                message.status,
+                message.messageType,
+                message.payload
+        );
+
+        message.payload.item1.forEach(tuple -> jobResults.put(tuple.item1, tuple.item2));
+        nodeResultRequests.put(nodeHandler, message.payload.item2);
     }
 
     public void dispatch(int period, int maxNumOfJobs) {
