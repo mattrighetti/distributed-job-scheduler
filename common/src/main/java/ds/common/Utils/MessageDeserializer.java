@@ -14,21 +14,28 @@ public class MessageDeserializer implements JsonDeserializer<Message<?>> {
         JsonObject jsonObject = json.getAsJsonObject();
         JsonElement messageType = jsonObject.get("messageType");
 
-        String type = messageType.getAsString();
+        Message.MessageType type = GsonUtils.shared.fromJson(messageType.getAsString(), Message.MessageType.class);
         Type typeToken = null;
 
         switch (type) {
-            case "JOB":
+            case JOB:
                 typeToken = new TypeToken<Message<Job>>() {}.getType();
                 break;
-            case "INFO":
+            case INFO:
                 typeToken = new TypeToken<Message<Integer>>() {}.getType();
                 break;
-            case "RESULT":
+            case RESULT:
+                typeToken = new TypeToken<Message<List<Tuple2<String, String>>>>() {}.getType();
+                break;
+            case RES_REQ:
                 typeToken = new TypeToken<Message<Tuple2<List<Tuple2<String, String>>, List<String>>>>() {}.getType();
+                break;
+            case REQUEST_OF_RES:
+                typeToken = new TypeToken<Message<List<String>>>() {}.getType();
                 break;
         }
 
         return new Gson().fromJson(jsonObject, typeToken);
     }
+
 }

@@ -6,8 +6,7 @@ import ds.common.Utils.GsonUtils;
 import ds.common.Utils.Tuple2;
 import org.junit.jupiter.api.Test;
 
-import static ds.common.Message.MessageType.JOB;
-import static ds.common.Message.MessageType.RESULT;
+import static ds.common.Message.MessageType.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -61,14 +60,14 @@ public class MessageTest {
         Tuple2<List<Tuple2<String, String>>, List<String>> complexTuple = new Tuple2<>(results, requests);
 
         Message<Tuple2<List<Tuple2<String, String>>, List<String>>> message =
-                new Message<>(200, RESULT, complexTuple);
+                new Message<>(200, RES_REQ, complexTuple);
 
         Type type = new TypeToken<Message<Tuple2<List<Tuple2<String, String>>, List<String>>>>() {}.getType();
         String json = GsonUtils.shared.toJson(message, type);
 
         Message<?> deserializedMessage = GsonUtils.shared.fromJson(json, Message.class);
         assertEquals(deserializedMessage.status, 200);
-        assertEquals(deserializedMessage.messageType, RESULT);
+        assertEquals(deserializedMessage.messageType, RES_REQ);
         assertTrue(deserializedMessage.payload instanceof Tuple2);
 
         Tuple2<?, ?> tuple2 = (Tuple2<?, ?>) deserializedMessage.payload;

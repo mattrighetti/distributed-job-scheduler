@@ -4,7 +4,9 @@ public class Message<T> {
     public enum MessageType {
         JOB,
         INFO,
-        RESULT
+        RESULT,
+        REQUEST_OF_RES,
+        RES_REQ
     }
 
     public final int status;
