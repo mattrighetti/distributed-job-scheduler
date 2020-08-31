@@ -202,4 +202,13 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         resultsMap.put(ticketHash, Optional.empty());
         return ticketHash;
     }
+
+    @Override
+    public Optional<String> handleResultRequest(String resultHash) {
+        if (resultsMap.containsKey(resultHash)) {
+            return resultsMap.get(resultHash);
+        } else {
+            return Optional.of("This job could not be found on this node.");
+        }
+    }
 }

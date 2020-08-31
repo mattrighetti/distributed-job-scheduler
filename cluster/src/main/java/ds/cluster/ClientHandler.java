@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.Scanner;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -52,13 +54,27 @@ public class ClientHandler implements Runnable {
             if (line == null || line.toLowerCase().trim().equals("exit")) {
                 isDone = true;
             } else {
-                try {
-                    String ticketHash = clientSubmissionHandler.handleJobSubmission(Integer.parseInt(line));
-                    printWriter.println("Ticket ID: " + ticketHash);
+                if (line.toCharArray()[0] == 'r') {
+                    char[] requestedHashArray = Arrays.copyOfRange(line.toCharArray(), 1, line.length());
+                    String requestedHash = String.copyValueOf(requestedHashArray);
+                    Optional<String> result = clientSubmissionHandler.handleResultRequest(requestedHash);
+
+                    if (result.isPresent()) {
+                        printWriter.println("Result: " + result.get());
+                    } else {
+                        printWriter.println("Result has not been executed yet, come back later.");
+                    }
+
                     printWriter.flush();
-                } catch (NumberFormatException e) {
-                    log.error("Could not parse to integer.");
-                    printWriter.println("Please enter a valid number.");
+                } else {
+                    try {
+                        String ticketHash = clientSubmissionHandler.handleJobSubmission(Integer.parseInt(line));
+                        printWriter.println("Ticket ID: " + ticketHash);
+                        printWriter.flush();
+                    } catch (NumberFormatException e) {
+                        log.error("Could not parse to integer.");
+                        printWriter.println("Please enter a valid number.");
+                    }
                 }
             }
         }
