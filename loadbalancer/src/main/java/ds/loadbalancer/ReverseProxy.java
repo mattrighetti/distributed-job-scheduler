@@ -15,13 +15,15 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
-import static ds.common.Message.MessageType.JOB;
+import static ds.common.Message.MessageType.*;
+import static ds.common.Message.MessageType.RES_REQ;
 
 public class ReverseProxy implements LBMessageHandler {
     private final int listeningPort;
     private final Map<NodeHandler, Integer> nodesInfo;
-    private final Map<String, String> jobResults;
+    private final Map<String, Optional<String>> jobResults;
     private final Map<NodeHandler, List<String>> nodeResultRequests;
     private final Deque<Job> globalJobDeque;
     private final Timer timer;
@@ -91,7 +93,7 @@ public class ReverseProxy implements LBMessageHandler {
         }
     }
 
-    public void handleInfoMessage(Message<Integer> message, NodeHandler nodeHandler) {
+    private void handleInfoMessage(Message<Integer> message, NodeHandler nodeHandler) {
         log.info("Received info on node's queue");
         log.debug("Message status: {}, type: {}, payload: {}, {}",
                 message.status,
@@ -102,7 +104,7 @@ public class ReverseProxy implements LBMessageHandler {
         nodesInfo.put(nodeHandler, message.payload);
     }
 
-    public void handleJobMessage(Message<Job> message, NodeHandler nodeHandler) {
+    private void handleJobMessage(Message<Job> message, NodeHandler nodeHandler) {
         log.info("Received job from node.");
         log.debug("Message status: {}, type: {}, payload: {}",
                 message.status,
@@ -113,7 +115,7 @@ public class ReverseProxy implements LBMessageHandler {
         log.debug("Current number of jobs to dispatch: {}", this.globalJobDeque.size());
     }
 
-    public void handleResultMessage(Message<List<Tuple2<String, String>>> message) {
+    private void handleResultMessage(Message<List<Tuple2<String, String>>> message) {
         log.info("Received result from node.");
         log.debug("Message status: {}, type: {}, payload: {}",
                 message.status,
@@ -121,10 +123,10 @@ public class ReverseProxy implements LBMessageHandler {
                 message.payload
         );
 
-        message.payload.forEach(tuple -> jobResults.put(tuple.item1, tuple.item2));
+        message.payload.forEach(tuple -> jobResults.put(tuple.item1, Optional.ofNullable(tuple.item2)));
     }
 
-    public void handleResultRequestsMessage(Message<List<String>> message, NodeHandler nodeHandler) {
+    private void handleResultRequestsMessage(Message<List<String>> message, NodeHandler nodeHandler) {
         log.info("Received result request from node.");
         log.debug("Message status: {}, type: {}, payload: {}",
                 message.status,
@@ -135,7 +137,7 @@ public class ReverseProxy implements LBMessageHandler {
         nodeResultRequests.put(nodeHandler, message.payload);
     }
 
-    public void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> message,
+    private void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> message,
                                    NodeHandler nodeHandler) {
         log.info("Received result + request from node.");
         log.debug("Message status: {}, type: {}, payload: {}",
@@ -144,8 +146,66 @@ public class ReverseProxy implements LBMessageHandler {
                 message.payload
         );
 
-        message.payload.item1.forEach(tuple -> jobResults.put(tuple.item1, tuple.item2));
+        message.payload.item1.forEach(tuple -> jobResults.put(tuple.item1, Optional.ofNullable(tuple.item2)));
         nodeResultRequests.put(nodeHandler, message.payload.item2);
+    }
+
+    public void requestResultsRoutine() {
+        TimerTask requestResultsTask = new TimerTask() {
+            @Override
+            public void run() {
+                List<String> emptyResults = emptyResultsList();
+                String bin1 = emptyResults.isEmpty() ? "0" : "1";
+
+                nodeResultRequests.forEach((nodeHandler, strings) -> {
+                    List<Tuple2<String, String>> nodeResultsRequests = strings.stream()
+                            .map(s -> new Tuple2<>(s, jobResults.get(s)))
+                            .filter(tuple -> tuple.item2.isPresent())
+                            .map(tuple -> new Tuple2<>(tuple.item1, tuple.item2.get()))
+                            .collect(Collectors.toList());
+
+                    String bin2 = nodeResultsRequests.isEmpty() ? "0" : "1";
+                    String mask = bin1 + bin2;
+
+                    Message<?> message = null;
+                    switch (mask) {
+                        case "00":
+                            log.debug("All results are stored correctly.");
+                            return;
+                        case "10":
+                            log.debug("Sending result request to {}", nodeHandler);
+                            message = new Message<>(200, REQUEST_OF_RES, emptyResults);
+                            break;
+                        case "01":
+                            log.debug("Sending results to {}", nodeHandler);
+                            message = new Message<>(200, RESULT, nodeResultsRequests);
+                            break;
+                        case "11":
+                            log.debug("Sending results and results request to {}", nodeHandler);
+                            Tuple2<List<Tuple2<String, String>>, List<String>> payloadPackage =
+                                    new Tuple2<>(nodeResultsRequests, emptyResults);
+                            message = new Message<>(200, RES_REQ, payloadPackage);
+                            break;
+                    }
+
+                    nodeHandler.write(message);
+                });
+            }
+        };
+
+        timer.schedule(requestResultsTask,0, 5 * 1000);
+    }
+
+    /**
+     * Collects jobIds of the jobs that have no result
+     * @return List of jobIds
+     */
+    private List<String> emptyResultsList() {
+        return jobResults.entrySet()
+                .stream()
+                .filter(pair -> pair.getValue().isEmpty())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
 
     public void dispatch(int period, int maxNumOfJobs) {
@@ -166,7 +226,7 @@ public class ReverseProxy implements LBMessageHandler {
         timer.schedule(dispatchTask, 0, period);
     }
 
-    public <T> void dispatchAlgorithm(int max, final Map<T, Integer> integerMap) {
+    private <T> void dispatchAlgorithm(int max, final Map<T, Integer> integerMap) {
         List<Tuple2<Integer, T>> list = Dispatcher.convertNodesInfoToList(integerMap);
         Dispatcher.applyAlgorithmFunction(max, (max_value) -> {
             Job jobToDispatch;

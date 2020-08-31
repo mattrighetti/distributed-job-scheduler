@@ -11,5 +11,6 @@ public class App {
 
         reverseProxy.openSocket();
         reverseProxy.dispatch(10000, 20);
+        reverseProxy.requestResultsRoutine();
     }
 }
