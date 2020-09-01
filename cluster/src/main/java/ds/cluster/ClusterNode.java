@@ -92,6 +92,8 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
                 List<Tuple2<String, String>> lbResultRequest =
                         StreamUtils.availableResults(loadBalancerResultRequestList, resultsMap);
 
+                lbResultRequest.forEach(tuple -> loadBalancerResultRequestList.remove(tuple.item1));
+
                 String bin1 = emptyResults.isEmpty() ? "0" : "1";
                 String bin2 = lbResultRequest.isEmpty() ? "0" : "1";
                 String mask = bin1 + bin2;
