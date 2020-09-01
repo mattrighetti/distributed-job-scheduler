@@ -141,7 +141,7 @@ public class ReverseProxy implements LBMessageHandler {
     }
 
     private void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> message,
-                                   NodeHandler nodeHandler) {
+                                    NodeHandler nodeHandler) {
         log.info("Received result + request from {}", nodeHandler);
         log.debug("Message status: {}, type: {}, payload: {}",
                 message.status,
@@ -161,11 +161,7 @@ public class ReverseProxy implements LBMessageHandler {
                 String bin1 = emptyResults.isEmpty() ? "0" : "1";
 
                 nodeResultRequests.forEach((nodeHandler, strings) -> {
-                    List<Tuple2<String, String>> nodeResultsRequests = strings.stream()
-                            .map(s -> new Tuple2<>(s, jobResults.get(s)))
-                            .filter(tuple -> tuple.item2.isPresent())
-                            .map(tuple -> new Tuple2<>(tuple.item1, tuple.item2.get()))
-                            .collect(Collectors.toList());
+                    List<Tuple2<String, String>> nodeResultsRequests = StreamUtils.availableResults(strings, jobResults);
 
                     String bin2 = nodeResultsRequests.isEmpty() ? "0" : "1";
                     String mask = bin1 + bin2;
@@ -196,7 +192,7 @@ public class ReverseProxy implements LBMessageHandler {
             }
         };
 
-        timer.schedule(requestResultsTask,0, 5 * 1000);
+        timer.schedule(requestResultsTask, 0, 5 * 1000);
     }
 
     public void dispatch(int period, int maxNumOfJobs) {

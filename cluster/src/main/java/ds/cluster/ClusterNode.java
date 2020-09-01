@@ -90,7 +90,8 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
             @Override
             public void run() {
                 List<String> emptyResults = StreamUtils.emptyResultList(resultsMap);
-                List<Tuple2<String, String>> lbResultRequest = loadbalancerRequestedResults();
+                List<Tuple2<String, String>> lbResultRequest =
+                        StreamUtils.availableResults(loadBalancerResultRequestList, resultsMap);
 
                 String bin1 = emptyResults.isEmpty() ? "0" : "1";
                 String bin2 = lbResultRequest.isEmpty() ? "0" : "1";
@@ -121,7 +122,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
             }
         };
 
-        timer.schedule(requestResultsTask,0, 5 * 1000);
+        timer.schedule(requestResultsTask, 0, 5 * 1000);
     }
 
     public List<Tuple2<String, String>> loadbalancerRequestedResults() {
