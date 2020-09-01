@@ -1,14 +1,17 @@
 package ds.common;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.Deque;
 
 public interface Dao<T> {
-    Optional<T> get(long id);
+    Deque<T> get();
 
-    List<T> getAll();
+    T removeFirst();
 
-    void save(T t);
+    void add(T t);
 
-    void delete(T t);
+    int size();
+
+    boolean isEmpty();
+
+    void addLast(Job job);
 }

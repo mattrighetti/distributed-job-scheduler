@@ -1,37 +1,62 @@
 package ds.common;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.Deque;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class JobDao implements Dao<Job> {
-    private final List<Job> jobs;
+    private final Deque<Job> jobs;
+    private final String filename;
 
-    public JobDao(List<Job> jobs) {
-        this.jobs = readFromFile("./jobs");
+    public static final Logger log = LogManager.getLogger(JobDao.class.getName());
+
+    public JobDao(String filename) {
+        this.filename = filename;
+        this.jobs = readFromFile(filename);
     }
 
-    private ArrayList<Job> readFromFile(String filepath) {
-        return null;
+    public Deque<Job> readFromFile(String filename) {
+        Optional<Deque<Job>> dequeOptional = FileStorage.readObjFromFile(filename, true);
+        return dequeOptional.orElseGet(ConcurrentLinkedDeque::new);
     }
 
-    @Override
-    public Optional<Job> get(long id) {
-        return Optional.ofNullable(jobs.get((int) id));
-    }
-
-    @Override
-    public List<Job> getAll() {
-        return jobs;
-    }
-
-    @Override
-    public void save(Job job) {
-        jobs.add(job);
+    public void saveToFile() {
+        FileStorage.writeObjToFile(this.jobs, this.filename, true);
     }
 
     @Override
-    public void delete(Job job) {
-        jobs.remove(job);
+    public Deque<Job> get() {
+        return readFromFile(this.filename);
+    }
+
+    @Override
+    public void add(Job job) {
+        this.jobs.add(job);
+        saveToFile();
+    }
+
+    @Override
+    public Job removeFirst() {
+        Job job = this.jobs.removeFirst();
+        saveToFile();
+        return job;
+    }
+
+    @Override
+    public void addLast(Job job) {
+        this.jobs.addLast(job);
+    }
+
+    @Override
+    public int size() {
+        return this.jobs.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return this.jobs.isEmpty();
     }
 }
