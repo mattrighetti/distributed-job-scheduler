@@ -2,6 +2,7 @@ package ds.loadbalancer;
 
 import ds.common.Job;
 import ds.common.Message;
+import ds.common.Utils.StreamUtils;
 import ds.common.Utils.Tuple2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -156,7 +157,7 @@ public class ReverseProxy implements LBMessageHandler {
         TimerTask requestResultsTask = new TimerTask() {
             @Override
             public void run() {
-                List<String> emptyResults = emptyResultsList();
+                List<String> emptyResults = StreamUtils.emptyResultList(jobResults);
                 String bin1 = emptyResults.isEmpty() ? "0" : "1";
 
                 nodeResultRequests.forEach((nodeHandler, strings) -> {
@@ -196,18 +197,6 @@ public class ReverseProxy implements LBMessageHandler {
         };
 
         timer.schedule(requestResultsTask,0, 5 * 1000);
-    }
-
-    /**
-     * Collects jobIds of the jobs that have no result
-     * @return List of jobIds
-     */
-    private List<String> emptyResultsList() {
-        return jobResults.entrySet()
-                .stream()
-                .filter(pair -> pair.getValue().isEmpty())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
     }
 
     public void dispatch(int period, int maxNumOfJobs) {

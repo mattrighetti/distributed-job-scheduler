@@ -4,6 +4,7 @@ import ds.common.Job;
 import ds.common.Message;
 import ds.common.MessageHandler;
 import ds.common.Utils.HashGenerator;
+import ds.common.Utils.StreamUtils;
 import ds.common.Utils.Tuple2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,7 +89,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         TimerTask requestResultsTask = new TimerTask() {
             @Override
             public void run() {
-                List<String> emptyResults = emptyResultsList();
+                List<String> emptyResults = StreamUtils.emptyResultList(resultsMap);
                 List<Tuple2<String, String>> lbResultRequest = loadbalancerRequestedResults();
 
                 String bin1 = emptyResults.isEmpty() ? "0" : "1";
@@ -121,14 +122,6 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         };
 
         timer.schedule(requestResultsTask,0, 5 * 1000);
-    }
-
-    public List<String> emptyResultsList() {
-        return resultsMap.entrySet()
-                .stream()
-                .filter(pair -> pair.getValue().isEmpty())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
     }
 
     public List<Tuple2<String, String>> loadbalancerRequestedResults() {
