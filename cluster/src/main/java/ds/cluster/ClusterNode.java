@@ -18,7 +18,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static ds.common.Message.MessageType.*;
 
@@ -101,17 +100,18 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
                 switch (mask) {
                     case "00":
                         log.debug("All results are stored correctly.");
-                        return;
+                        message = new Message<>(200, REQUEST_OF_RES, new ArrayList<>());
+                        break;
                     case "10":
-                        log.debug("Sending result request to loadbalancer.");
+                        log.info("Sending result request to loadbalancer.");
                         message = new Message<>(200, REQUEST_OF_RES, emptyResults);
                         break;
                     case "01":
-                        log.debug("Sending results to loadbalancer.");
+                        log.info("Sending results to loadbalancer.");
                         message = new Message<>(200, RESULT, lbResultRequest);
                         break;
                     case "11":
-                        log.debug("Sending results and results request to loadbalancer.");
+                        log.info("Sending results and results request to loadbalancer.");
                         Tuple2<List<Tuple2<String, String>>, List<String>> payloadPackage =
                                 new Tuple2<>(lbResultRequest, emptyResults);
                         message = new Message<>(200, RES_REQ, payloadPackage);
@@ -122,7 +122,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
             }
         };
 
-        timer.schedule(requestResultsTask, 0, 5 * 1000);
+        timer.schedule(requestResultsTask, 0, 3 * 1000);
     }
 
     public void runExecutor() {
@@ -162,22 +162,40 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         log.info("Received a result request from server");
         List<Tuple2<String, String>> resultList = message.payload;
 
-        resultList.forEach(result -> resultsMap.put(result.item1, Optional.of(result.item2)));
+        log.info("Resetting loadBalancerResultRequestList");
+        loadBalancerResultRequestList.clear();
+        log.debug("Updated LBRequest after RESULT: {}", loadBalancerResultRequestList);
+
+        resultList.forEach(result -> {
+            log.debug("Inserting result of Job[{}] in resultsMap", result.item1);
+            resultsMap.put(result.item1, Optional.of(result.item2));
+        });
     }
 
     public void handleResultRequestsMessage(Message<List<String>> message) {
         log.info("Received a result request from server");
         List<String> requestList = message.payload;
 
+        log.info("Resetting loadBalancerResultRequestList");
+        loadBalancerResultRequestList.clear();
         loadBalancerResultRequestList.addAll(requestList);
+        log.debug("Updated LBRequest: {}", loadBalancerResultRequestList);
     }
 
     public void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> mixedMessage) {
+        log.info("Received a result + request from server");
         List<Tuple2<String, String>> resultList = mixedMessage.payload.item1;
         List<String> requestList = mixedMessage.payload.item2;
 
-        resultList.forEach(result -> resultsMap.put(result.item1, Optional.of(result.item2)));
+        resultList.forEach(result -> {
+            log.debug("Inserting result of Job[{}] in resultsMap", result.item1);
+            resultsMap.put(result.item1, Optional.of(result.item2));
+        });
+
+        log.info("Resetting loadBalancerResultRequestList");
+        loadBalancerResultRequestList.clear();
         loadBalancerResultRequestList.addAll(requestList);
+        log.debug("Updated LBRequest: {}", loadBalancerResultRequestList);
     }
 
     @Override

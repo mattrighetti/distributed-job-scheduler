@@ -16,7 +16,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static ds.common.Message.MessageType.*;
 import static ds.common.Message.MessageType.RES_REQ;
@@ -62,6 +61,7 @@ public class ReverseProxy implements LBMessageHandler {
                     nodeHandler = new NodeHandler(clientSocket, this);
 
                     nodesInfo.put(nodeHandler, -1);
+                    nodeResultRequests.put(nodeHandler, new ArrayList<>());
                     log.debug("Added new node {} to nodesInfo CHashMap", nodeHandler);
                     this.incomingConnectionsExecutor.submit(nodeHandler);
                 }
@@ -83,7 +83,7 @@ public class ReverseProxy implements LBMessageHandler {
                 handleJobMessage((Message<Job>) message, nodeHandler);
                 break;
             case RESULT:
-                handleResultMessage((Message<List<Tuple2<String, String>>>) message);
+                handleResultMessage((Message<List<Tuple2<String, String>>>) message, nodeHandler);
                 break;
             case RES_REQ:
                 handleMixedMessage((Message<Tuple2<List<Tuple2<String, String>>, List<String>>>) message, nodeHandler);
@@ -126,7 +126,12 @@ public class ReverseProxy implements LBMessageHandler {
                 message.payload
         );
 
-        message.payload.forEach(tuple -> jobResults.put(tuple.item1, Optional.ofNullable(tuple.item2)));
+        nodeResultRequests.get(nodeHandler).clear();
+
+        message.payload.forEach(tuple -> {
+            log.debug("Inserting result of Job[{}] in resultsMap", tuple.item1);
+            jobResults.put(tuple.item1, Optional.of(tuple.item2));
+        });
     }
 
     private void handleResultRequestsMessage(Message<List<String>> message, NodeHandler nodeHandler) {
@@ -137,7 +142,9 @@ public class ReverseProxy implements LBMessageHandler {
                 message.payload
         );
 
+        log.info("Updating {} requests", nodeHandler);
         nodeResultRequests.put(nodeHandler, message.payload);
+        log.debug("{} needs {}", nodeHandler, message.payload);
     }
 
     private void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> message,
@@ -149,8 +156,14 @@ public class ReverseProxy implements LBMessageHandler {
                 message.payload
         );
 
-        message.payload.item1.forEach(tuple -> jobResults.put(tuple.item1, Optional.ofNullable(tuple.item2)));
+        message.payload.item1.forEach(tuple -> {
+            log.debug("Inserting result of Job[{}] in resultsMap", tuple.item1);
+            jobResults.put(tuple.item1, Optional.of(tuple.item2));
+        });
+
+        log.info("Updating {} requests", nodeHandler);
         nodeResultRequests.put(nodeHandler, message.payload.item2);
+        log.debug("{} needs {}", nodeHandler, message.payload.item2);
     }
 
     public void requestResultsRoutine() {
@@ -192,7 +205,7 @@ public class ReverseProxy implements LBMessageHandler {
             }
         };
 
-        timer.schedule(requestResultsTask, 0, 5 * 1000);
+        timer.schedule(requestResultsTask, 0, 3 * 1000);
     }
 
     public void dispatch(int period, int maxNumOfJobs) {
@@ -205,6 +218,7 @@ public class ReverseProxy implements LBMessageHandler {
                     log.debug("Nodes available: {}", nodesInfo);
                     if (!globalJobDeque.isEmpty()) {
                         dispatchAlgorithm(Math.min(maxNumOfJobs, globalJobDeque.size()), nodesInfo);
+                        log.debug("Remaining number of jobs to dispatch: {}", globalJobDeque.size());
                     }
                 }
             }
