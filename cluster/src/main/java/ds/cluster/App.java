@@ -7,6 +7,7 @@ public class App {
             node.connect(args[0], Integer.parseInt(args[1]));
             node.sendJobQueueInfo();
             node.runExecutor();
+            node.requestResults();
             node.listenForClientConnections(9000, true);
         } else {
             System.err.println("No hostname:port was given, exiting.");

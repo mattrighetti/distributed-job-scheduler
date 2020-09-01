@@ -27,4 +27,13 @@ public class Tuple2<T1, T2> implements Tuple {
         return ((Tuple2<?, ?>) obj).item1.equals(this.item1) &&
                 ((Tuple2<?, ?>) obj).item2.equals(this.item2);
     }
+
+    @Override
+    public String toString() {
+        return "Tuple2{" +
+                item1 +
+                ", " +
+                item2 +
+                '}';
+    }
 }

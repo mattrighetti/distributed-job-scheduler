@@ -1,10 +1,8 @@
 package ds.cluster;
 
-import ds.common.Job;
 import ds.common.Message;
 import ds.common.MessageHandler;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import ds.common.Utils.GsonUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,7 +11,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Type;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.Callable;
@@ -51,7 +48,7 @@ public class LoadBalancerHandler implements Callable<Void> {
         this.executorService.execute(() -> {
             try {
                 String jsonData;
-                log.info("Reading from inputStream...");
+                log.info("Reading from inputStream.");
                 while (!this.isStopped.get()) {
                     jsonData = this.bufferedReader.readLine();
                     if (jsonData == null) {
