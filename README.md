@@ -35,8 +35,14 @@ You can override this values at any time by passing `-e ENV_NAME=value` to the d
 ## Run container
 1. Make sure to create a `docker network` with `docker network create rp_cluster_network`
 
-2. Run ReverseProxy with `docker run --rm --network-alias reverse-proxy --network rp_cluster_network -it mattrighetti/loadbalancer:latest 8080`
+2. Run ReverseProxy with 
+```
+docker run --rm --network-alias reverse-proxy --network rp_cluster_network -it mattrighetti/loadbalancer:latest 8080
+```
 
-3. Run ClusterNode with `docker run --rm --network rp_cluster_network -it -p 9000:9000 mattrighetti/cluster_node:latest reverse-proxy 8080`
+3. Run ClusterNode with 
+```
+docker run --rm --network rp_cluster_network -it -p 9000:9000 mattrighetti/cluster_node:latest reverse-proxy 8080
+```
 
 4. Connect to `ClusterNode` with `nc <cluster_node_ip> <cluster_node_port>`
