@@ -21,6 +21,8 @@ import static ds.common.Message.MessageType.*;
 import static ds.common.Message.MessageType.RES_REQ;
 
 public class ReverseProxy implements LBMessageHandler {
+    private final int maxNumNodes = System.getenv().containsKey("MAX_NUM_NODES") ?
+            Integer.parseInt(System.getenv("MAX_NUM_NODES")) : 5;
     private final int listeningPort;
     private final Map<NodeHandler, Integer> nodesInfo;
     private final Map<String, Optional<String>> jobResults;
@@ -28,7 +30,7 @@ public class ReverseProxy implements LBMessageHandler {
     private final Deque<Job> globalJobDeque;
     private final Timer timer;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
-    private final ExecutorService incomingConnectionsExecutor = Executors.newFixedThreadPool(5);
+    private final ExecutorService incomingConnectionsExecutor = Executors.newFixedThreadPool(maxNumNodes);
 
     private static final Logger log = LogManager.getLogger(ReverseProxy.class.getName());
 
@@ -166,7 +168,7 @@ public class ReverseProxy implements LBMessageHandler {
         log.debug("{} needs {}", nodeHandler, message.payload.item2);
     }
 
-    public void requestResultsRoutine() {
+    public void requestResultsRoutine(int period) {
         TimerTask requestResultsTask = new TimerTask() {
             @Override
             public void run() {
@@ -205,7 +207,7 @@ public class ReverseProxy implements LBMessageHandler {
             }
         };
 
-        timer.schedule(requestResultsTask, 0, 3 * 1000);
+        timer.schedule(requestResultsTask, 0, period);
     }
 
     public void dispatch(int period, int maxNumOfJobs) {
