@@ -1,6 +1,7 @@
 package ds.cluster;
 
 import ds.common.Job;
+import ds.common.JobDao;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -8,14 +9,14 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class Executor implements Runnable {
-    private final Deque<Job> jobDeque;
+    private final JobDao jobDeque;
     private final Map<String, Optional<String>> resultsMap;
     private final Timer timer;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private static final Logger log = LogManager.getLogger(Executor.class.getName());
 
-    public Executor(final Deque<Job> jobDeque, final Map<String, Optional<String>> resultsMap) {
+    public Executor(final JobDao jobDeque, final Map<String, Optional<String>> resultsMap) {
         this.jobDeque = jobDeque;
         this.resultsMap = resultsMap;
         this.timer = new Timer();

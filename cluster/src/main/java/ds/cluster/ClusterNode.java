@@ -1,6 +1,7 @@
 package ds.cluster;
 
 import ds.common.Job;
+import ds.common.JobDao;
 import ds.common.Message;
 import ds.common.MessageHandler;
 import ds.common.Utils.HashGenerator;
@@ -14,7 +15,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,7 +24,7 @@ import static ds.common.Message.MessageType.*;
 public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     private LoadBalancerHandler loadBalancerHandler;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
-    private final Deque<Job> localJobDeque;
+    private final JobDao localJobDeque;
     private final Map<String, Optional<String>> resultsMap;
     private final List<String> loadBalancerResultRequestList;
     private final Timer timer;
@@ -34,7 +34,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     private static final Logger log = LogManager.getLogger(ClusterNode.class.getName());
 
     public ClusterNode() {
-        this.localJobDeque = new ConcurrentLinkedDeque<>();
+        this.localJobDeque = new JobDao("./ClusterNodeLocalJobDeque");
         this.resultsMap = new ConcurrentHashMap<>();
         this.loadBalancerResultRequestList = new ArrayList<>();
         this.timer = new Timer();

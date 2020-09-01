@@ -1,6 +1,7 @@
 package ds.loadbalancer;
 
 import ds.common.Job;
+import ds.common.JobDao;
 import ds.common.Message;
 import ds.common.Utils.StreamUtils;
 import ds.common.Utils.Tuple2;
@@ -12,7 +13,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,7 +27,7 @@ public class ReverseProxy implements LBMessageHandler {
     private final Map<NodeHandler, Integer> nodesInfo;
     private final Map<String, Optional<String>> jobResults;
     private final Map<NodeHandler, List<String>> nodeResultRequests;
-    private final Deque<Job> globalJobDeque;
+    private final JobDao globalJobDeque;
     private final Timer timer;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final ExecutorService incomingConnectionsExecutor = Executors.newFixedThreadPool(maxNumNodes);
@@ -39,7 +39,7 @@ public class ReverseProxy implements LBMessageHandler {
         this.nodesInfo = new ConcurrentHashMap<>();
         this.jobResults = new ConcurrentHashMap<>();
         this.nodeResultRequests = new ConcurrentHashMap<>();
-        this.globalJobDeque = new ConcurrentLinkedDeque<>();
+        this.globalJobDeque = new JobDao("./ReverseProxyGlobalQueue");
         this.timer = new Timer();
     }
 
