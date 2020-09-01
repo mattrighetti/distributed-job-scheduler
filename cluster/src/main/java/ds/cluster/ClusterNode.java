@@ -125,14 +125,6 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         timer.schedule(requestResultsTask, 0, 5 * 1000);
     }
 
-    public List<Tuple2<String, String>> loadbalancerRequestedResults() {
-        return loadBalancerResultRequestList.stream()
-                .map(s -> new Tuple2<>(s, resultsMap.get(s)))
-                .filter(tuple -> tuple.item2.isPresent())
-                .map(tuple -> new Tuple2<>(tuple.item1, tuple.item2.get()))
-                .collect(Collectors.toList());
-    }
-
     public void runExecutor() {
         log.info("Running executor");
         this.executor.triggerTimerCheck(1000);
