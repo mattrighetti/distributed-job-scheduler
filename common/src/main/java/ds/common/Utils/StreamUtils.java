@@ -9,22 +9,21 @@ import static ds.common.Utils.Strings.NULL;
 
 public class StreamUtils {
 
-    public static <T> List<T> emptyResultList(Map<T, T> map) {
+    public static List<String> emptyResultList(Map<String, String> map) {
         return map.entrySet()
                 .stream()
-                .filter(pair -> pair.getValue() == NULL.toString())
+                .filter(pair -> pair.getValue().equals(NULL.toString()))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
     }
 
-    public static <T> List<Tuple2<String, T>> availableResults(List<String> requested,
-                                                                    Map<String, T> resultsMap) {
+    public static List<Tuple2<String, String>> availableResults(List<String> requested,
+                                                                    Map<String, String> resultsMap) {
         return requested.stream()
                 .flatMap(s ->
                         resultsMap.containsKey(s) ? Stream.of(new Tuple2<>(s, resultsMap.get(s))) : Stream.empty()
                 )
-                .filter(tuple -> tuple.item2 != NULL.toString())
-                .map(tuple -> new Tuple2<>(tuple.item1, tuple.item2))
+                .filter(tuple -> !tuple.item2.equals(NULL.toString()))
                 .collect(Collectors.toList());
     }
 }
