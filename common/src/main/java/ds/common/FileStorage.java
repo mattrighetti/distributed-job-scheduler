@@ -5,7 +5,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.util.Optional;
 
 public class FileStorage {
     private static final Logger log = LogManager.getLogger(FileStorage.class.getName());
@@ -15,6 +14,7 @@ public class FileStorage {
                 FileOutputStream fileOut = new FileOutputStream(filepath);
                 ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)
         ) {
+            log.debug("Writing to file {}", objectToSerialize);
             objectOut.writeObject(objectToSerialize);
             if (verbose) {
                 log.info("The Object was successfully written to file");
@@ -30,7 +30,7 @@ public class FileStorage {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> Optional<T> readObjFromFile(String filepath, boolean verbose) {
+    public static <T> T readObjFromFile(String filepath, boolean verbose) {
         T obj = null;
         try (
                 FileInputStream fileIn = new FileInputStream(filepath);
@@ -46,7 +46,7 @@ public class FileStorage {
             e.printStackTrace();
         }
 
-        return Optional.ofNullable(obj);
+        return obj;
     }
 
 }

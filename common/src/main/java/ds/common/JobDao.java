@@ -20,7 +20,7 @@ public class JobDao implements Storable<Deque<Job>> {
 
     @Override
     public Deque<Job> readFromFile() {
-        Optional<Deque<Job>> dequeOptional = FileStorage.readObjFromFile(filename, true);
+        Optional<Deque<Job>> dequeOptional = Optional.ofNullable(FileStorage.readObjFromFile(filename, true));
         return dequeOptional.orElseGet(ConcurrentLinkedDeque::new);
     }
 
@@ -33,19 +33,23 @@ public class JobDao implements Storable<Deque<Job>> {
         return readFromFile();
     }
 
+    @StateChanging
     public void add(Job job) {
         this.jobs.add(job);
         saveToFile();
     }
 
+    @StateChanging
     public Job removeFirst() {
         Job job = this.jobs.removeFirst();
         saveToFile();
         return job;
     }
 
+    @StateChanging
     public void addLast(Job job) {
         this.jobs.addLast(job);
+        saveToFile();
     }
 
     public int size() {
@@ -54,5 +58,9 @@ public class JobDao implements Storable<Deque<Job>> {
 
     public boolean isEmpty() {
         return this.jobs.isEmpty();
+    }
+
+    public Job getFirst() {
+        return this.jobs.getFirst();
     }
 }

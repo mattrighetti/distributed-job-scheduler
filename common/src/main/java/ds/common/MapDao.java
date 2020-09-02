@@ -3,12 +3,11 @@ package ds.common;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class MapDao<K, V> implements Storable<Map<K, V>>, Serializable {
+public class MapDao<K, V> implements Storable<Map<K, V>> {
     private final Map<K, V> map;
     private final String filename;
 
@@ -21,9 +20,8 @@ public class MapDao<K, V> implements Storable<Map<K, V>>, Serializable {
 
     @Override
     public Map<K, V> readFromFile() {
-        Optional<Map<K, V>> map = FileStorage.readObjFromFile(filename, true);
+        Optional<Map<K, V>> map = Optional.ofNullable(FileStorage.readObjFromFile(filename, true));
         return map.orElseGet(ConcurrentHashMap::new);
-
     }
 
     public Map<K, V> getMap() {
@@ -34,6 +32,7 @@ public class MapDao<K, V> implements Storable<Map<K, V>>, Serializable {
         return this.map.get(key);
     }
 
+    @StateChanging
     public void put(K key, V value) {
         this.map.put(key, value);
         saveToFile();
@@ -52,6 +51,7 @@ public class MapDao<K, V> implements Storable<Map<K, V>>, Serializable {
         return this.map.containsKey(key);
     }
 
+    @StateChanging
     public V remove(K key) {
         V value = this.map.remove(key);
         saveToFile();
