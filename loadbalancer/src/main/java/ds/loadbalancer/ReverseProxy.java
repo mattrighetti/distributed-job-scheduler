@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,9 +25,9 @@ public class ReverseProxy implements LBMessageHandler {
     private final int maxNumNodes = System.getenv().containsKey("MAX_NUM_NODES") ?
             Integer.parseInt(System.getenv("MAX_NUM_NODES")) : 5;
     private final int listeningPort;
-    private final MapDao<NodeHandler, Integer> nodesInfo;
+    private final Map<NodeHandler, Integer> nodesInfo;
     private final MapDao<String, Optional<String>> jobResults;
-    private final MapDao<NodeHandler, List<String>> nodeResultRequests;
+    private final Map<NodeHandler, List<String>> nodeResultRequests;
     private final JobDao globalJobDeque;
     private final Timer timer;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
@@ -36,9 +37,9 @@ public class ReverseProxy implements LBMessageHandler {
 
     public ReverseProxy(int listeningPort) {
         this.listeningPort = listeningPort;
-        this.nodesInfo = new MapDao<>("./ReverseProxyNodesInfo");
+        this.nodesInfo = new ConcurrentHashMap<>();
         this.jobResults = new MapDao<>("./ReverseProxyJobResults");
-        this.nodeResultRequests = new MapDao<>("./ReverseProxyNodeResultRequests");
+        this.nodeResultRequests = new ConcurrentHashMap<>();
         this.globalJobDeque = new JobDao("./ReverseProxyGlobalQueue");
         this.timer = new Timer();
     }
@@ -97,14 +98,20 @@ public class ReverseProxy implements LBMessageHandler {
     }
 
     private void handleInfoMessage(Message<Integer> message, NodeHandler nodeHandler) {
-        log.info("Received info from {}", nodeHandler);
-        log.debug("Message status: {}, type: {}, payload: {}, {}",
-                message.status,
-                message.messageType,
-                message.payload,
-                nodeHandler
-        );
-        nodesInfo.put(nodeHandler, message.payload);
+        if (message.status == 200) {
+            log.info("Received info from {}", nodeHandler);
+            log.debug("Message status: {}, type: {}, payload: {}, {}",
+                    message.status,
+                    message.messageType,
+                    message.payload,
+                    nodeHandler
+            );
+            nodesInfo.put(nodeHandler, message.payload);
+        } else if (message.status == 500) {
+            log.warn("{} has been disconnected, removing nodeHandler.", nodeHandler);
+            nodesInfo.remove(nodeHandler);
+            nodeResultRequests.remove(nodeHandler);
+        }
     }
 
     private void handleJobMessage(Message<Job> message, NodeHandler nodeHandler) {
@@ -175,7 +182,7 @@ public class ReverseProxy implements LBMessageHandler {
                 List<String> emptyResults = StreamUtils.emptyResultList(jobResults.getMap());
                 String bin1 = emptyResults.isEmpty() ? "0" : "1";
 
-                nodeResultRequests.getMap().forEach((nodeHandler, strings) -> {
+                nodeResultRequests.forEach((nodeHandler, strings) -> {
                     List<Tuple2<String, String>> nodeResultsRequests = StreamUtils.availableResults(strings, jobResults.getMap());
 
                     String bin2 = nodeResultsRequests.isEmpty() ? "0" : "1";
@@ -219,7 +226,7 @@ public class ReverseProxy implements LBMessageHandler {
                 } else {
                     log.debug("Nodes available: {}", nodesInfo);
                     if (!globalJobDeque.isEmpty()) {
-                        dispatchAlgorithm(Math.min(maxNumOfJobs, globalJobDeque.size()), nodesInfo.getMap());
+                        dispatchAlgorithm(Math.min(maxNumOfJobs, globalJobDeque.size()), nodesInfo);
                         log.debug("Remaining number of jobs to dispatch: {}", globalJobDeque.size());
                     }
                 }
