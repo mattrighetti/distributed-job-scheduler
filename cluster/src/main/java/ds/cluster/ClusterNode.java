@@ -1,9 +1,6 @@
 package ds.cluster;
 
-import ds.common.Job;
-import ds.common.JobDao;
-import ds.common.Message;
-import ds.common.MessageHandler;
+import ds.common.*;
 import ds.common.Utils.HashGenerator;
 import ds.common.Utils.StreamUtils;
 import ds.common.Utils.Tuple2;
@@ -14,7 +11,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,7 +21,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     private LoadBalancerHandler loadBalancerHandler;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final JobDao localJobDeque;
-    private final Map<String, Optional<String>> resultsMap;
+    private final MapDao<String, Optional<String>> resultsMap;
     private final List<String> loadBalancerResultRequestList;
     private final Timer timer;
     private final Executor executor;
@@ -35,10 +31,10 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
 
     public ClusterNode() {
         this.localJobDeque = new JobDao("./ClusterNodeLocalJobDeque");
-        this.resultsMap = new ConcurrentHashMap<>();
+        this.resultsMap = new MapDao<>("./ClusterNodeResultsMap");
         this.loadBalancerResultRequestList = new ArrayList<>();
         this.timer = new Timer();
-        this.executor = new Executor(localJobDeque, resultsMap);
+        this.executor = new Executor(localJobDeque, resultsMap.getMap());
     }
 
     public void stop() {
@@ -88,9 +84,9 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         TimerTask requestResultsTask = new TimerTask() {
             @Override
             public void run() {
-                List<String> emptyResults = StreamUtils.emptyResultList(resultsMap);
+                List<String> emptyResults = StreamUtils.emptyResultList(resultsMap.getMap());
                 List<Tuple2<String, String>> lbResultRequest =
-                        StreamUtils.availableResults(loadBalancerResultRequestList, resultsMap);
+                        StreamUtils.availableResults(loadBalancerResultRequestList, resultsMap.getMap());
 
                 lbResultRequest.forEach(tuple -> loadBalancerResultRequestList.remove(tuple.item1));
 
