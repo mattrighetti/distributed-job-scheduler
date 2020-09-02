@@ -11,13 +11,13 @@ public class StreamUtilsTest {
 
     @Test
     public void emptyResultsTestOne() {
-        Map<String, Optional<String>> map = new HashMap<>();
-        map.put("one", Optional.empty());
-        map.put("two", Optional.empty());
-        map.put("three", Optional.empty());
-        map.put("four", Optional.of("test"));
-        map.put("five", Optional.empty());
-        map.put("six", Optional.empty());
+        Map<String, String> map = new HashMap<>();
+        map.put("one", null);
+        map.put("two", null);
+        map.put("three", null);
+        map.put("four", "test");
+        map.put("five", null);
+        map.put("six", null);
 
         List<String> emptyVal = StreamUtils.emptyResultList(map);
 
@@ -35,13 +35,13 @@ public class StreamUtilsTest {
 
     @Test
     public void emptyResultsTestTwo() {
-        Map<String, Optional<String>> map = new HashMap<>();
-        map.put("one", Optional.of("test"));
-        map.put("two", Optional.of("test"));
-        map.put("three", Optional.of("test"));
-        map.put("four", Optional.of("test"));
-        map.put("five", Optional.of("test"));
-        map.put("six", Optional.of("test"));
+        Map<String, String> map = new HashMap<>();
+        map.put("one", "test");
+        map.put("two", "test");
+        map.put("three", "test");
+        map.put("four", "test");
+        map.put("five", "test");
+        map.put("six", "test");
 
         List<String> emptyVal = StreamUtils.emptyResultList(map);
 
@@ -58,13 +58,13 @@ public class StreamUtilsTest {
         requested.add("one");
         requested.add("two");
 
-        Map<String, Optional<String>> map = new HashMap<>();
-        map.put("one", Optional.of("test"));
-        map.put("two", Optional.of("test"));
-        map.put("three", Optional.of("test"));
-        map.put("four", Optional.of("test"));
-        map.put("five", Optional.of("test"));
-        map.put("six", Optional.of("test"));
+        Map<String, String> map = new HashMap<>();
+        map.put("one", "test");
+        map.put("two", "test");
+        map.put("three", "test");
+        map.put("four", "test");
+        map.put("five", "test");
+        map.put("six", "test");
 
         List<Tuple2<String, String>> result = StreamUtils.availableResults(requested, map);
         List<Tuple2<String, String>> expected = new ArrayList<>();
@@ -82,13 +82,13 @@ public class StreamUtilsTest {
         requested.add("one");
         requested.add("two");
 
-        Map<String, Optional<String>> map = new HashMap<>();
-        map.put("one", Optional.empty());
-        map.put("two", Optional.of("test"));
-        map.put("three", Optional.of("test"));
-        map.put("four", Optional.of("test"));
-        map.put("five", Optional.of("test"));
-        map.put("six", Optional.of("test"));
+        Map<String, String> map = new HashMap<>();
+        map.put("one", null);
+        map.put("two", "test");
+        map.put("three", "test");
+        map.put("four", "test");
+        map.put("five", "test");
+        map.put("six", "test");
 
         List<Tuple2<String, String>> result = StreamUtils.availableResults(requested, map);
         List<Tuple2<String, String>> expected = new ArrayList<>();
@@ -105,13 +105,13 @@ public class StreamUtilsTest {
         requested.add("one");
         requested.add("two");
 
-        Map<String, Optional<String>> map = new HashMap<>();
-        map.put("one", Optional.empty());
-        map.put("two", Optional.empty());
-        map.put("three", Optional.of("test"));
-        map.put("four", Optional.of("test"));
-        map.put("five", Optional.of("test"));
-        map.put("six", Optional.of("test"));
+        Map<String, String> map = new HashMap<>();
+        map.put("one", null);
+        map.put("two", null);
+        map.put("three", "test");
+        map.put("four", "test");
+        map.put("five", "test");
+        map.put("six", "test");
 
         List<Tuple2<String, String>> result = StreamUtils.availableResults(requested, map);
         List<Tuple2<String, String>> expected = new ArrayList<>();
@@ -127,9 +127,9 @@ public class StreamUtilsTest {
         requested.add("one");
         requested.add("two");
 
-        Map<String, Optional<String>> map = new HashMap<>();
-        map.put("five", Optional.empty());
-        map.put("D", Optional.empty());
+        Map<String, String> map = new HashMap<>();
+        map.put("five", null);
+        map.put("D", null);
 
         List<Tuple2<String, String>> result = StreamUtils.availableResults(requested, map);
         List<Tuple2<String, String>> expected = new ArrayList<>();

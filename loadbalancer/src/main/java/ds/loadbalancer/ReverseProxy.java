@@ -26,7 +26,7 @@ public class ReverseProxy implements LBMessageHandler {
             Integer.parseInt(System.getenv("MAX_NUM_NODES")) : 5;
     private final int listeningPort;
     private final Map<NodeHandler, Integer> nodesInfo;
-    private final MapDao<String, Optional<String>> jobResults;
+    private final MapDao<String, String> jobResults;
     private final Map<NodeHandler, List<String>> nodeResultRequests;
     private final JobDao globalJobDeque;
     private final Timer timer;
@@ -122,7 +122,7 @@ public class ReverseProxy implements LBMessageHandler {
                 message.payload
         );
 
-        jobResults.put(message.payload.jobId, Optional.empty());
+        jobResults.put(message.payload.jobId, null);
         globalJobDeque.addLast(message.payload);
         log.debug("Current number of jobs to dispatch: {}", this.globalJobDeque.size());
     }
@@ -139,7 +139,7 @@ public class ReverseProxy implements LBMessageHandler {
 
         message.payload.forEach(tuple -> {
             log.debug("Inserting result of Job[{}] in resultsMap", tuple.item1);
-            jobResults.put(tuple.item1, Optional.of(tuple.item2));
+            jobResults.put(tuple.item1, tuple.item2);
         });
     }
 
@@ -167,7 +167,7 @@ public class ReverseProxy implements LBMessageHandler {
 
         message.payload.item1.forEach(tuple -> {
             log.debug("Inserting result of Job[{}] in resultsMap", tuple.item1);
-            jobResults.put(tuple.item1, Optional.of(tuple.item2));
+            jobResults.put(tuple.item1, tuple.item2);
         });
 
         log.info("Updating {} requests", nodeHandler);

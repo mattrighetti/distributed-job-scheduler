@@ -10,13 +10,13 @@ import java.util.concurrent.*;
 
 public class Executor implements Runnable {
     private final JobDao jobDeque;
-    private final Map<String, Optional<String>> resultsMap;
+    private final Map<String, String> resultsMap;
     private final Timer timer;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private static final Logger log = LogManager.getLogger(Executor.class.getName());
 
-    public Executor(final JobDao jobDeque, final Map<String, Optional<String>> resultsMap) {
+    public Executor(final JobDao jobDeque, final Map<String, String> resultsMap) {
         this.jobDeque = jobDeque;
         this.resultsMap = resultsMap;
         this.timer = new Timer();
@@ -59,7 +59,7 @@ public class Executor implements Runnable {
                 future = executor.submit(job);
                 result = future.get();
                 log.debug("Writing result to Map -> {}", result);
-                resultsMap.put(job.jobId, Optional.of(result));
+                resultsMap.put(job.jobId, result);
             } catch (InterruptedException | ExecutionException | NullPointerException e) {
                 e.printStackTrace();
             }

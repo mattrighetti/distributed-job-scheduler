@@ -21,7 +21,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     private LoadBalancerHandler loadBalancerHandler;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final JobDao localJobDeque;
-    private final MapDao<String, Optional<String>> resultsMap;
+    private final MapDao<String, String> resultsMap;
     private final List<String> loadBalancerResultRequestList;
     private final Timer timer;
     private final Executor executor;
@@ -166,7 +166,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
 
         resultList.forEach(result -> {
             log.debug("Inserting result of Job[{}] in resultsMap", result.item1);
-            resultsMap.put(result.item1, Optional.of(result.item2));
+            resultsMap.put(result.item1, result.item2);
         });
     }
 
@@ -187,7 +187,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
 
         resultList.forEach(result -> {
             log.debug("Inserting result of Job[{}] in resultsMap", result.item1);
-            resultsMap.put(result.item1, Optional.of(result.item2));
+            resultsMap.put(result.item1, result.item2);
         });
 
         log.info("Resetting loadBalancerResultRequestList");
@@ -201,14 +201,14 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         String ticketHash = HashGenerator.generateHash(16);
         Message<Job> jobMessage = new Message<>(200, JOB, new Job(ticketHash, milliseconds));
         loadBalancerHandler.write(jobMessage);
-        resultsMap.put(ticketHash, Optional.empty());
+        resultsMap.put(ticketHash, null);
         return ticketHash;
     }
 
     @Override
     public Optional<String> handleResultRequest(String resultHash) {
         if (resultsMap.containsKey(resultHash)) {
-            return resultsMap.get(resultHash);
+            return Optional.of(resultsMap.get(resultHash));
         } else {
             return Optional.of("This job could not be found on this node.");
         }
