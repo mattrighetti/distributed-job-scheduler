@@ -6,4 +6,6 @@ public interface ClientSubmissionHandler {
     String handleJobSubmission(int milliseconds);
 
     Optional<String> handleResultRequest(String resultHash);
+
+    String getAllStoredResults();
 }

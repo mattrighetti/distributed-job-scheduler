@@ -66,6 +66,10 @@ public class ClientHandler implements Runnable {
                     }
 
                     printWriter.flush();
+                } else if (line.toLowerCase().trim().equals("getall")) {
+                    String results = clientSubmissionHandler.getAllStoredResults();
+                    printWriter.println(results);
+                    printWriter.flush();
                 } else {
                     try {
                         String ticketHash = clientSubmissionHandler.handleJobSubmission(Integer.parseInt(line));

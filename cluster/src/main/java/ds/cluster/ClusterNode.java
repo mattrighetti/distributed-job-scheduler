@@ -3,6 +3,7 @@ package ds.cluster;
 import ds.common.*;
 import ds.common.Utils.HashGenerator;
 import ds.common.Utils.StreamUtils;
+import ds.common.Utils.Strings;
 import ds.common.Utils.Tuple2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -213,5 +214,23 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         } else {
             return Optional.of("This job could not be found on this node.");
         }
+    }
+
+    @Override
+    public String getAllStoredResults() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Results\n");
+
+        new HashMap<>(this.resultsMap.getMap()).forEach((key, value) -> stringBuilder
+                .append(key)
+                .append(" -> ")
+                .append(value)
+                .append("\n"));
+
+        if (stringBuilder.toString().equals("Result\n")) {
+            return "No result has been stored yet";
+        }
+
+        return stringBuilder.toString();
     }
 }
