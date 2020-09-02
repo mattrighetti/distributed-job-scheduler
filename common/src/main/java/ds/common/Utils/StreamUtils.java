@@ -5,12 +5,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static ds.common.Utils.Strings.NULL;
+
 public class StreamUtils {
 
     public static <T> List<T> emptyResultList(Map<T, T> map) {
         return map.entrySet()
                 .stream()
-                .filter(pair -> pair.getValue() == null)
+                .filter(pair -> pair.getValue() == NULL.toString())
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
     }
@@ -21,7 +23,7 @@ public class StreamUtils {
                 .flatMap(s ->
                         resultsMap.containsKey(s) ? Stream.of(new Tuple2<>(s, resultsMap.get(s))) : Stream.empty()
                 )
-                .filter(tuple -> tuple.item2 != null)
+                .filter(tuple -> tuple.item2 != NULL.toString())
                 .map(tuple -> new Tuple2<>(tuple.item1, tuple.item2))
                 .collect(Collectors.toList());
     }

@@ -3,7 +3,9 @@ package ds.common.Utils;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
+import static ds.common.Utils.Strings.NULL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,13 +13,13 @@ public class StreamUtilsTest {
 
     @Test
     public void emptyResultsTestOne() {
-        Map<String, String> map = new HashMap<>();
-        map.put("one", null);
-        map.put("two", null);
-        map.put("three", null);
+        Map<String, String> map = new ConcurrentHashMap<>();
+        map.put("one", NULL.toString());
+        map.put("two", NULL.toString());
+        map.put("three", NULL.toString());
         map.put("four", "test");
-        map.put("five", null);
-        map.put("six", null);
+        map.put("five", NULL.toString());
+        map.put("six", NULL.toString());
 
         List<String> emptyVal = StreamUtils.emptyResultList(map);
 
@@ -58,7 +60,7 @@ public class StreamUtilsTest {
         requested.add("one");
         requested.add("two");
 
-        Map<String, String> map = new HashMap<>();
+        Map<String, String> map = new ConcurrentHashMap<>();
         map.put("one", "test");
         map.put("two", "test");
         map.put("three", "test");
@@ -82,8 +84,8 @@ public class StreamUtilsTest {
         requested.add("one");
         requested.add("two");
 
-        Map<String, String> map = new HashMap<>();
-        map.put("one", null);
+        Map<String, String> map = new ConcurrentHashMap<>();
+        map.put("one", NULL.toString());
         map.put("two", "test");
         map.put("three", "test");
         map.put("four", "test");
@@ -105,9 +107,9 @@ public class StreamUtilsTest {
         requested.add("one");
         requested.add("two");
 
-        Map<String, String> map = new HashMap<>();
-        map.put("one", null);
-        map.put("two", null);
+        Map<String, String> map = new ConcurrentHashMap<>();
+        map.put("one", NULL.toString());
+        map.put("two", NULL.toString());
         map.put("three", "test");
         map.put("four", "test");
         map.put("five", "test");
@@ -127,9 +129,9 @@ public class StreamUtilsTest {
         requested.add("one");
         requested.add("two");
 
-        Map<String, String> map = new HashMap<>();
-        map.put("five", null);
-        map.put("D", null);
+        Map<String, String> map = new ConcurrentHashMap<>();
+        map.put("five", NULL.toString());
+        map.put("D", NULL.toString());
 
         List<Tuple2<String, String>> result = StreamUtils.availableResults(requested, map);
         List<Tuple2<String, String>> expected = new ArrayList<>();

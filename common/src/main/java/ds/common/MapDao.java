@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,7 +22,8 @@ public class MapDao<K, V> implements Storable<Map<K, V>>, Serializable {
     @Override
     public Map<K, V> readFromFile() {
         Optional<Map<K, V>> map = FileStorage.readObjFromFile(filename, true);
-        return map.<Map<K, V>>map(ConcurrentHashMap::new).orElseGet(ConcurrentHashMap::new);
+        return map.orElseGet(ConcurrentHashMap::new);
+
     }
 
     public Map<K, V> getMap() {
@@ -41,7 +41,7 @@ public class MapDao<K, V> implements Storable<Map<K, V>>, Serializable {
 
     @Override
     public void saveToFile() {
-        FileStorage.writeObjToFile(new HashMap<>(this.map), filename, true);
+        FileStorage.writeObjToFile(this.map, filename, true);
     }
 
     public boolean isEmpty() {

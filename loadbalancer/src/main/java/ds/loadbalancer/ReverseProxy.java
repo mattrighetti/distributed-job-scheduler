@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static ds.common.Message.MessageType.*;
 import static ds.common.Message.MessageType.RES_REQ;
+import static ds.common.Utils.Strings.NULL;
 
 public class ReverseProxy implements LBMessageHandler {
     private final int maxNumNodes = System.getenv().containsKey("MAX_NUM_NODES") ?
@@ -122,7 +123,7 @@ public class ReverseProxy implements LBMessageHandler {
                 message.payload
         );
 
-        jobResults.put(message.payload.jobId, null);
+        jobResults.put(message.payload.jobId, NULL.toString());
         globalJobDeque.addLast(message.payload);
         log.debug("Current number of jobs to dispatch: {}", this.globalJobDeque.size());
     }

@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static ds.common.Message.MessageType.*;
+import static ds.common.Utils.Strings.NULL;
 
 public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     private LoadBalancerHandler loadBalancerHandler;
@@ -201,7 +202,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         String ticketHash = HashGenerator.generateHash(16);
         Message<Job> jobMessage = new Message<>(200, JOB, new Job(ticketHash, milliseconds));
         loadBalancerHandler.write(jobMessage);
-        resultsMap.put(ticketHash, null);
+        resultsMap.put(ticketHash, NULL.toString());
         return ticketHash;
     }
 
