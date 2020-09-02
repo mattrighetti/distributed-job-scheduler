@@ -7,7 +7,7 @@ import java.util.Deque;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class JobDao implements Dao<Job> {
+public class JobDao implements Storable<Deque<Job>> {
     private final Deque<Job> jobs;
     private final String filename;
 
@@ -15,47 +15,43 @@ public class JobDao implements Dao<Job> {
 
     public JobDao(String filename) {
         this.filename = filename;
-        this.jobs = readFromFile(filename);
+        this.jobs = readFromFile();
     }
 
-    public Deque<Job> readFromFile(String filename) {
+    @Override
+    public Deque<Job> readFromFile() {
         Optional<Deque<Job>> dequeOptional = FileStorage.readObjFromFile(filename, true);
         return dequeOptional.orElseGet(ConcurrentLinkedDeque::new);
     }
 
+    @Override
     public void saveToFile() {
         FileStorage.writeObjToFile(this.jobs, this.filename, true);
     }
 
-    @Override
     public Deque<Job> get() {
-        return readFromFile(this.filename);
+        return readFromFile();
     }
 
-    @Override
     public void add(Job job) {
         this.jobs.add(job);
         saveToFile();
     }
 
-    @Override
     public Job removeFirst() {
         Job job = this.jobs.removeFirst();
         saveToFile();
         return job;
     }
 
-    @Override
     public void addLast(Job job) {
         this.jobs.addLast(job);
     }
 
-    @Override
     public int size() {
         return this.jobs.size();
     }
 
-    @Override
     public boolean isEmpty() {
         return this.jobs.isEmpty();
     }
