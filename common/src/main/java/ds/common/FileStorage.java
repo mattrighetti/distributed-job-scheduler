@@ -19,6 +19,9 @@ public class FileStorage {
             if (verbose) {
                 log.info("The Object was successfully written to file");
             }
+        } catch (NotSerializableException e) {
+            log.warn("Could not write {}", objectToSerialize.getClass());
+            e.printStackTrace();
         } catch (FileNotFoundException e) {
             log.warn("File was not found");
         } catch (IOException e) {

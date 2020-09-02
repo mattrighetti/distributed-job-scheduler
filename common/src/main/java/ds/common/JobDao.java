@@ -1,37 +1,58 @@
 package ds.common;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.Deque;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class JobDao implements Dao<Job> {
-    private final List<Job> jobs;
+public class JobDao implements Storable<Deque<Job>> {
+    private final Deque<Job> jobs;
+    private final String filename;
 
-    public JobDao(List<Job> jobs) {
-        this.jobs = readFromFile("./jobs");
-    }
+    public static final Logger log = LogManager.getLogger(JobDao.class.getName());
 
-    private ArrayList<Job> readFromFile(String filepath) {
-        return null;
-    }
-
-    @Override
-    public Optional<Job> get(long id) {
-        return Optional.ofNullable(jobs.get((int) id));
+    public JobDao(String filename) {
+        this.filename = filename;
+        this.jobs = readFromFile();
     }
 
     @Override
-    public List<Job> getAll() {
-        return jobs;
+    public Deque<Job> readFromFile() {
+        Optional<Deque<Job>> dequeOptional = FileStorage.readObjFromFile(filename, true);
+        return dequeOptional.orElseGet(ConcurrentLinkedDeque::new);
     }
 
     @Override
-    public void save(Job job) {
-        jobs.add(job);
+    public void saveToFile() {
+        FileStorage.writeObjToFile(this.jobs, this.filename, true);
     }
 
-    @Override
-    public void delete(Job job) {
-        jobs.remove(job);
+    public Deque<Job> get() {
+        return readFromFile();
+    }
+
+    public void add(Job job) {
+        this.jobs.add(job);
+        saveToFile();
+    }
+
+    public Job removeFirst() {
+        Job job = this.jobs.removeFirst();
+        saveToFile();
+        return job;
+    }
+
+    public void addLast(Job job) {
+        this.jobs.addLast(job);
+    }
+
+    public int size() {
+        return this.jobs.size();
+    }
+
+    public boolean isEmpty() {
+        return this.jobs.isEmpty();
     }
 }
