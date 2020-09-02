@@ -1,5 +1,6 @@
 FROM fabric8/java-alpine-openjdk11-jre
-COPY target/cluster-0.3-cluster.jar /cluster.jar
+WORKDIR /usr/src/app
+COPY target/cluster-0.3-cluster.jar ./cluster.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/cluster.jar"]
+ENTRYPOINT ["java", "-jar", "cluster.jar"]
 CMD ["ip", "port"]
