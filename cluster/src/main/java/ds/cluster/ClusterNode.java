@@ -36,7 +36,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         this.resultsMap = new MapDao<>("./ClusterNodeResultsMap");
         this.loadBalancerResultRequestList = new ArrayList<>();
         this.timer = new Timer();
-        this.executor = new Executor(localJobDeque, resultsMap.getMap());
+        this.executor = new Executor(localJobDeque, resultsMap);
     }
 
     public void stop() {

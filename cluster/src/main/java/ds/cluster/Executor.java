@@ -2,6 +2,7 @@ package ds.cluster;
 
 import ds.common.Job;
 import ds.common.JobDao;
+import ds.common.MapDao;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -10,13 +11,13 @@ import java.util.concurrent.*;
 
 public class Executor implements Runnable {
     private final JobDao jobDeque;
-    private final Map<String, String> resultsMap;
+    private final MapDao<String, String> resultsMap;
     private final Timer timer;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private static final Logger log = LogManager.getLogger(Executor.class.getName());
 
-    public Executor(final JobDao jobDeque, final Map<String, String> resultsMap) {
+    public Executor(final JobDao jobDeque, final MapDao<String, String> resultsMap) {
         this.jobDeque = jobDeque;
         this.resultsMap = resultsMap;
         this.timer = new Timer();
@@ -54,10 +55,11 @@ public class Executor implements Runnable {
         String result;
         while (!jobDeque.isEmpty()) {
             try {
-                job = this.jobDeque.removeFirst();
+                job = this.jobDeque.getFirst();
                 log.debug("Running {}", job);
                 future = executor.submit(job);
                 result = future.get();
+                this.jobDeque.removeFirst();
                 log.debug("Writing result to Map -> {}", result);
                 resultsMap.put(job.jobId, result);
             } catch (InterruptedException | ExecutionException | NullPointerException e) {
