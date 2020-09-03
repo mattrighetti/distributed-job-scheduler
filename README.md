@@ -40,6 +40,10 @@ You can override this values at any time by passing `-e ENV_NAME=value` to the d
 docker run --rm \
 --network-alias reverse-proxy \
 --network rp_cluster_network \
+-e DISPATCH_PERIOD=3000 \
+-e MAX_NUM_NODES=5 \
+-e REQUEST_RESULT_PERIOD=3000 \
+-e MAX_NUM_JOBS_DISPATCH=50 \
 -it mattrighetti/loadbalancer:latest 8080
 ```
 
