@@ -7,9 +7,11 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 
 public class FileStorage {
+    private static final boolean verbose =
+            System.getenv().containsKey("FS_VERBOSE") && Boolean.parseBoolean(System.getenv("FS_VERBOSE"));
     private static final Logger log = LogManager.getLogger(FileStorage.class.getName());
 
-    public static <T> void writeObjToFile(T objectToSerialize, String filepath, boolean verbose) {
+    public static <T> void writeObjToFile(T objectToSerialize, String filepath) {
         try (
                 FileOutputStream fileOut = new FileOutputStream(filepath);
                 ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)
@@ -30,7 +32,7 @@ public class FileStorage {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T readObjFromFile(String filepath, boolean verbose) {
+    public static <T> T readObjFromFile(String filepath) {
         T obj = null;
         try (
                 FileInputStream fileIn = new FileInputStream(filepath);

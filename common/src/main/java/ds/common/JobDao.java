@@ -20,13 +20,13 @@ public class JobDao implements Storable<Deque<Job>> {
 
     @Override
     public Deque<Job> readFromFile() {
-        Optional<Deque<Job>> dequeOptional = Optional.ofNullable(FileStorage.readObjFromFile(filename, true));
+        Optional<Deque<Job>> dequeOptional = Optional.ofNullable(FileStorage.readObjFromFile(filename));
         return dequeOptional.orElseGet(ConcurrentLinkedDeque::new);
     }
 
     @Override
     public void saveToFile() {
-        FileStorage.writeObjToFile(this.jobs, this.filename, true);
+        FileStorage.writeObjToFile(this.jobs, this.filename);
     }
 
     public Deque<Job> get() {
