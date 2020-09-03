@@ -21,9 +21,9 @@ returned so that he/she can later check the job's result
 |Name|Payload type|Description|
 |:-|:-|:-|
 |`INFO`|`Integer`|Message containing an integer value used by `ClusterNodes` to notify how many jobs they have in their local job queue|
-|`REQUEST_OF_RES`|`List<String>`|Message containing an integer value used by `ClusterNodes` to notify how many jobs they have in their local job queue|
-|`RESULT`|`List<Tuple2<String, String>>`|Message containing an integer value used by `ClusterNodes` to notify how many jobs they have in their local job queue|
-|`RES_REQ`|`Tuple2<`<br>`List<Tuple2<String, String>>,`<br>` List<String>`<br>`>`|Message containing an integer value used by `ClusterNodes` to notify how many jobs they have in their local job queue|
+|`REQUEST_OF_RES`|`List<String>`|Message containing a list of **jobIds** that both `ReverseProxy` and `ClusterNode` use to request those job results|
+|`RESULT`|`List<Tuple2<String, String>>`|Message containing a list of tuples that both `ReverseProxy` and `ClusterNode` use to send jobs result.<br>Each tuple contains a **jobId** and its result|
+|`RES_REQ`|`Tuple2<`<br>`List<Tuple2<String, String>>,`<br>` List<String>`<br>`>`|Message containing a list of **jobIds** to request and a list of tuples of job results.<br>This message is used to optimize message communication and to avoid network cluttering|
 
 # How to run
 ## Download images from DockerHub
