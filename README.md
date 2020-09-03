@@ -17,10 +17,22 @@ returned so that he/she can later check the job's result
 4. `ReverseProxy` distributes jobs equally among each `ClusterNode` so that they have, almost always, the same amount of jobs in their queue
 5. ...
 
+### Messages types
+|Name|Payload type|Description|
+|:-|:-|:-|
+|`INFO`|`Integer`|Message containing an integer value used by `ClusterNodes` to notify how many jobs they have in their local job queue|
+|`REQUEST_OF_RES`|`List<String>`|Message containing an integer value used by `ClusterNodes` to notify how many jobs they have in their local job queue|
+|`RESULT`|`List<Tuple2<String, String>>`|Message containing an integer value used by `ClusterNodes` to notify how many jobs they have in their local job queue|
+|`RES_REQ`|`Tuple2<`<br>`List<Tuple2<String, String>>,`<br>` List<String>`<br>`>`|Message containing an integer value used by `ClusterNodes` to notify how many jobs they have in their local job queue|
+
 # How to run
 ## Download images from DockerHub
-1. `docker pull mattrighetti/cluster_node`
-2. `docker pull mattrighetti/loadbalancer`
+1. `docker pull ghcr.io/mattrighetti/cluster_node`
+2. `docker pull ghcr.io/mattrighetti/loadbalancer`
+
+You can find the Docker images on my Github Container Registry 
+[cluster_node](https://github.com/users/MattRighetti/packages/container/cluster_node/29697) and 
+[loadbalancer](https://github.com/users/MattRighetti/packages/container/loadbalancer/29696)
 
 ## Loadbalancer ENV variables
 | Name   |   Description   | Default value |
@@ -44,7 +56,7 @@ docker run --rm \
 -e MAX_NUM_NODES=5 \
 -e REQUEST_RESULT_PERIOD=3000 \
 -e MAX_NUM_JOBS_DISPATCH=50 \
--it mattrighetti/loadbalancer:latest 8080
+-it ghcr.io/mattrighetti/loadbalancer:latest 8080
 ```
 
 3. Run ClusterNode with 
@@ -52,7 +64,7 @@ docker run --rm \
 docker run --rm \
 --network rp_cluster_network \
  -p 9000:9000 \
- -it mattrighetti/cluster_node:latest \
+ -it ghcr.io/mattrighetti/cluster_node:latest \
  reverse-proxy 8080
 ```
 
