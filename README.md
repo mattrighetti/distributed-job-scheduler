@@ -6,24 +6,31 @@
 
 # Implementation
 ### Main elements
-- `ReverseProxy`: Grand central LoadBalancer and job dispatcher
+- `ReverseProxy`: Grand central loadbalancer and job dispatcher
 - `ClusterNode`: Node on which jobs are executed
 
 ### Flow
 1. Client connects to `ClusterNode` and submits as many jobs as he/she wants and for each job he/she submits a ticket is
 returned so that he/she can later check the job's result
-2. `ClusterNode` forwards every incoming job to the `ReverseProxy`
+2. `ClusterNode` forwards every incoming job from clients to `ReverseProxy`
 3. `ReverseProxy` constantly collects info on every `ClusterNode` jobQueue
 4. `ReverseProxy` distributes jobs equally among each `ClusterNode` so that they have, almost always, the same amount of jobs in their queue
-5. ...
+5. `ReverseProxy` and `ClusterNode` constantly exchange messages to request/respond for/with results until every job result is fulfilled
 
-### Messages types
-|Name|Payload type|Description|
-|:-|:-|:-|
-|`INFO`|`Integer`|Message containing an integer value used by `ClusterNodes` to notify how many jobs they have in their local job queue|
-|`REQUEST_OF_RES`|`List<String>`|Message containing a list of **jobIds** that both `ReverseProxy` and `ClusterNode` use to request those job results|
-|`RESULT`|`List<Tuple2<String, String>>`|Message containing a list of tuples that both `ReverseProxy` and `ClusterNode` use to send jobs result.<br>Each tuple contains a **jobId** and its result|
-|`RES_REQ`|`Tuple2<`<br>`List<Tuple2<String, String>>,`<br>` List<String>`<br>`>`|Message containing a list of **jobIds** to request and a list of tuples of job results.<br>This message is used to optimize message communication and to avoid network cluttering|
+### Messages description
+|Name|Payload type|
+|:---------------|:-------------|
+|`INFO`          |`Integer`     |
+|`REQUEST_OF_RES`|`List<String>`|
+|`RESULT`|`List<Tuple2<String, String>>`|
+|`RES_REQ`|`Tuple2<List<Tuple2<String, String>>, List<String>>`|
+
+|Name|Description|
+|:---------------|:-|
+|`INFO`          |Message containing an integer value used by `ClusterNodes` to notify how many jobs they have in their local job queue|
+|`REQUEST_OF_RES`|Message containing a list of **jobIds** that both `ReverseProxy` and `ClusterNode` use to request those job results|
+|`RESULT`|Message containing a list of tuples that both `ReverseProxy` and `ClusterNode` use to send jobs result.<br>Each tuple contains a **jobId** and its result|
+|`RES_REQ`|Message containing a list of **jobIds** to request and a list of tuples of job results.<br>This message is used to optimize message communication and to avoid network cluttering|
 
 # How to run
 ## Download images from DockerHub
