@@ -54,11 +54,18 @@ You can override this values at any time by passing `-e ENV_NAME=value` to the d
 ## Run container
 1. Make sure to create a `docker network` with `docker network create rp_cluster_network`
 
-2. Run ReverseProxy with 
+2. To use persistent storage you have to create a volume for each instance you want to launch
+```
+docker volume create rp_v
+docker volume create c1_v
+```
+
+3. Run ReverseProxy with 
 ```
 docker run --rm \
 --network-alias reverse-proxy \
 --network rp_cluster_network \
+--mount source=rp_v,target=/usr/src/app \
 -e DISPATCH_PERIOD=3000 \
 -e MAX_NUM_NODES=5 \
 -e REQUEST_RESULT_PERIOD=3000 \
@@ -66,13 +73,14 @@ docker run --rm \
 -it ghcr.io/mattrighetti/loadbalancer:latest 8080
 ```
 
-3. Run ClusterNode with 
+4. Run ClusterNode with 
 ```
 docker run --rm \
 --network rp_cluster_network \
- -p 9000:9000 \
- -it ghcr.io/mattrighetti/cluster_node:latest \
- reverse-proxy 8080
+--mount source=c1_v,target=/usr/src/app \
+-p 9000:9000 \
+-it ghcr.io/mattrighetti/cluster_node:latest \
+reverse-proxy 8080
 ```
 
-4. Connect to `ClusterNode` with `nc <cluster_node_ip> <cluster_node_port>`
+5. Connect to `ClusterNode` with `nc <cluster_node_ip> <cluster_node_port>`
