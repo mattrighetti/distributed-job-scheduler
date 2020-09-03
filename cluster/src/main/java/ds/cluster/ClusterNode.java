@@ -253,5 +253,6 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         log.warn("Stopping every outgoing message task.");
         jobQueueInfoTask.cancel();
         requestResultsTask.cancel();
+        executor.stopExecutorOnEmptyJobQueue();
     }
 }
