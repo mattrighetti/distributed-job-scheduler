@@ -1,7 +1,6 @@
 package ds.cluster;
 
 import ds.common.Message;
-import ds.common.MessageHandler;
 import com.google.gson.Gson;
 import ds.common.Utils.GsonUtils;
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -54,6 +54,7 @@ public class LoadBalancerHandler implements Callable<Void> {
                     if (jsonData == null) {
                         log.debug("Received null, closing socket.");
                         this.stop();
+                        return;
                     }
                     log.debug("Read: {}", jsonData);
 
@@ -68,18 +69,19 @@ public class LoadBalancerHandler implements Callable<Void> {
         });
     }
 
-    public void write(Message<?> message) {
+    public void write(Message<?> message) throws SocketException {
         log.info("Writing {} to outputStream", message);
         String json = new Gson().toJson(message);
         try {
             this.outputStreamWriter.write(json + '\n');
             this.outputStreamWriter.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new SocketException("Could not contact ReverseProxy, try again later");
         }
     }
 
     public void stop() {
+        this.messageHandler.handleReverseProxyDisconnection();
         this.isStopped.set(true);
         this.closeConnections();
     }
