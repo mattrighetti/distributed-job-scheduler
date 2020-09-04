@@ -16,7 +16,9 @@ public class FileStorage {
                 FileOutputStream fileOut = new FileOutputStream(filepath);
                 ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)
         ) {
-            log.debug("Writing to file {}", objectToSerialize);
+            if (verbose) {
+                log.debug("Writing to file {}", objectToSerialize);
+            }
             objectOut.writeObject(objectToSerialize);
             if (verbose) {
                 log.info("The Object was successfully written to file");

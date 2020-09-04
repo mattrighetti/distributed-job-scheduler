@@ -63,6 +63,9 @@ public class LoadBalancerHandler implements Callable<Void> {
             } catch (SocketTimeoutException e) {
                 log.debug("No message was received for 30 seconds, closing connection...");
                 this.stop();
+            } catch (SocketException e) {
+                log.warn("Socket exception, closed connection.");
+                this.stop();
             } catch (IOException e) {
                 e.printStackTrace();
             }
