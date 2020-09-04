@@ -208,15 +208,17 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     }
 
     @Override
-    public String handleJobSubmission(int milliseconds) {
+    public String handleJobSubmission(int milliseconds) throws Exception {
         String ticketHash = HashGenerator.generateHash(16);
         Message<Job> jobMessage = new Message<>(200, JOB, new Job(ticketHash, milliseconds));
+
         try {
             loadBalancerHandler.write(jobMessage);
         } catch (SocketException e) {
             log.error(e.getMessage() + " [handleJobSubmission]");
-            return e.getMessage();
+            throw new Exception("Could not contact ReverseProxy");
         }
+
         resultsMap.put(ticketHash, NULL.toString());
         return ticketHash;
     }
