@@ -20,6 +20,8 @@ import static ds.common.Message.MessageType.*;
 import static ds.common.Utils.Strings.NULL;
 
 public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
+    private static final boolean verbose =
+            System.getenv().containsKey("VERBOSE") && Boolean.parseBoolean(System.getenv("VERBOSE"));
     private LoadBalancerHandler loadBalancerHandler;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final JobDao localJobDeque;
@@ -82,6 +84,7 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
                 loadBalancerHandler.write(message);
             } catch (SocketException e) {
                 log.error(e.getMessage() + " [requestResult]");
+                handleReverseProxyDisconnection();
             }
         }
     };
@@ -173,7 +176,9 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
 
         log.info("Resetting loadBalancerResultRequestList");
         loadBalancerResultRequestList.clear();
-        log.debug("Updated LBRequest after RESULT: {}", loadBalancerResultRequestList);
+        if (verbose) {
+            log.debug("Updated LBRequest after RESULT: {}", loadBalancerResultRequestList);
+        }
 
         resultList.forEach(result -> {
             log.debug("Inserting result of Job[{}] in resultsMap", result.item1);
@@ -188,7 +193,9 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         log.info("Resetting loadBalancerResultRequestList");
         loadBalancerResultRequestList.clear();
         loadBalancerResultRequestList.addAll(requestList);
-        log.debug("Updated LBRequest: {}", loadBalancerResultRequestList);
+        if (verbose) {
+            log.debug("Updated LBRequest: {}", loadBalancerResultRequestList);
+        }
     }
 
     public void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> mixedMessage) {
@@ -204,7 +211,9 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         log.info("Resetting loadBalancerResultRequestList");
         loadBalancerResultRequestList.clear();
         loadBalancerResultRequestList.addAll(requestList);
-        log.debug("Updated LBRequest: {}", loadBalancerResultRequestList);
+        if (verbose) {
+            log.debug("Updated LBRequest: {}", loadBalancerResultRequestList);
+        }
     }
 
     @Override

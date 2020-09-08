@@ -8,7 +8,7 @@ import java.io.*;
 
 public class FileStorage {
     private static final boolean verbose =
-            System.getenv().containsKey("FS_VERBOSE") && Boolean.parseBoolean(System.getenv("FS_VERBOSE"));
+            System.getenv().containsKey("VERBOSE") && Boolean.parseBoolean(System.getenv("VERBOSE"));
     private static final Logger log = LogManager.getLogger(FileStorage.class.getName());
 
     public static <T> void writeObjToFile(T objectToSerialize, String filepath) {
