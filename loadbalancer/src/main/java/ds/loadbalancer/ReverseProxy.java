@@ -104,12 +104,14 @@ public class ReverseProxy implements LBMessageHandler {
     private void handleInfoMessage(Message<Integer> message, NodeHandler nodeHandler) {
         if (message.status == 200) {
             log.info("Received info from {}", nodeHandler);
-            log.debug("Message status: {}, type: {}, payload: {}, {}",
-                    message.status,
-                    message.messageType,
-                    message.payload,
-                    nodeHandler
-            );
+            if (verbose) {
+                log.debug("Message status: {}, type: {}, payload: {}, {}",
+                        message.status,
+                        message.messageType,
+                        message.payload,
+                        nodeHandler
+                );
+            }
             nodesInfo.put(nodeHandler, message.payload);
         } else if (message.status == 500) {
             log.warn("{} has been disconnected, removing nodeHandler.", nodeHandler);
@@ -133,11 +135,13 @@ public class ReverseProxy implements LBMessageHandler {
 
     private void handleResultMessage(Message<List<Tuple2<String, String>>> message, NodeHandler nodeHandler) {
         log.info("Received result from {}", nodeHandler);
-        log.debug("Message status: {}, type: {}, payload: {}",
-                message.status,
-                message.messageType,
-                message.payload
-        );
+        if (verbose) {
+            log.debug("Message status: {}, type: {}, payload: {}",
+                    message.status,
+                    message.messageType,
+                    message.payload
+            );
+        }
 
         nodeResultRequests.get(nodeHandler).clear();
 
@@ -149,25 +153,31 @@ public class ReverseProxy implements LBMessageHandler {
 
     private void handleResultRequestsMessage(Message<List<String>> message, NodeHandler nodeHandler) {
         log.info("Received result request from {}", nodeHandler);
-        log.debug("Message status: {}, type: {}, payload: {}",
-                message.status,
-                message.messageType,
-                message.payload
-        );
+        if (verbose) {
+            log.debug("Message status: {}, type: {}, payload: {}",
+                    message.status,
+                    message.messageType,
+                    message.payload
+            );
+        }
 
         log.info("Updating {} requests", nodeHandler);
         nodeResultRequests.put(nodeHandler, message.payload);
-        log.debug("{} needs {}", nodeHandler, message.payload);
+        if (verbose) {
+            log.debug("{} needs {}", nodeHandler, message.payload);
+        }
     }
 
     private void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> message,
                                     NodeHandler nodeHandler) {
         log.info("Received result + request from {}", nodeHandler);
-        log.debug("Message status: {}, type: {}, payload: {}",
-                message.status,
-                message.messageType,
-                message.payload
-        );
+        if (verbose) {
+            log.debug("Message status: {}, type: {}, payload: {}",
+                    message.status,
+                    message.messageType,
+                    message.payload
+            );
+        }
 
         message.payload.item1.forEach(tuple -> {
             log.debug("Inserting result of Job[{}] in resultsMap", tuple.item1);
@@ -176,7 +186,9 @@ public class ReverseProxy implements LBMessageHandler {
 
         log.info("Updating {} requests", nodeHandler);
         nodeResultRequests.put(nodeHandler, message.payload.item2);
-        log.debug("{} needs {}", nodeHandler, message.payload.item2);
+        if (verbose) {
+            log.debug("{} needs {}", nodeHandler, message.payload.item2);
+        }
     }
 
     public void requestResultsRoutine(int period) {
@@ -224,6 +236,7 @@ public class ReverseProxy implements LBMessageHandler {
                     } catch (SocketException e) {
                         log.warn("Removing {} from nodesInfo caused by disconnection.", nodeHandler);
                         nodesInfo.remove(nodeHandler);
+                        nodeResultRequests.remove(nodeHandler);
                     }
                 });
             }
