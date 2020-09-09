@@ -33,6 +33,7 @@ public class ReverseProxy implements LBMessageHandler {
     private final MapDao<String, String> jobResults;
     private final Map<NodeHandler, List<String>> nodeResultRequests;
     private final JobDao globalJobDeque;
+    private final JobDao globalDispatchedJobs;
     private final Timer timer;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final ExecutorService incomingConnectionsExecutor = Executors.newFixedThreadPool(maxNumNodes);
@@ -45,6 +46,7 @@ public class ReverseProxy implements LBMessageHandler {
         this.jobResults = new MapDao<>("./ReverseProxyJobResults");
         this.nodeResultRequests = new ConcurrentHashMap<>();
         this.globalJobDeque = new JobDao("./ReverseProxyGlobalQueue");
+        this.globalDispatchedJobs = new JobDao("./ReverseProxyGlobalDispatchedQueue");
         this.timer = new Timer();
     }
 
@@ -270,14 +272,15 @@ public class ReverseProxy implements LBMessageHandler {
             Job jobToDispatch;
             while (max_value > 0) {
                 jobToDispatch = this.globalJobDeque.getFirst();
+
                 try {
                     ((NodeHandler) list.get(0).item2).write(new Message<>(200, JOB, jobToDispatch));
                 } catch (SocketException e) {
                     log.error("A node disconnected while dispatching was in action, recovering...");
                     return;
                 }
-                // TODO consider adding a dispatched job queue to save failed jobs
-                this.globalJobDeque.removeFirst();
+
+                this.globalDispatchedJobs.add(this.globalJobDeque.removeFirst());
                 list.get(0).item1 += 1;
                 list.sort(Comparator.comparingInt(o -> o.item1));
                 max_value--;

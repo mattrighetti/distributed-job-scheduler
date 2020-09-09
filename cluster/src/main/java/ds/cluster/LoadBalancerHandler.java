@@ -19,6 +19,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LoadBalancerHandler implements Callable<Void> {
+    private static final boolean verbose =
+            System.getenv().containsKey("VERBOSE") && Boolean.parseBoolean(System.getenv("VERBOSE"));
     private final Socket loadBalancerSocket;
     private BufferedReader bufferedReader;
     private OutputStreamWriter outputStreamWriter;
@@ -73,7 +75,9 @@ public class LoadBalancerHandler implements Callable<Void> {
     }
 
     public void write(Message<?> message) throws SocketException {
-        log.info("Writing {} to outputStream", message);
+        if (verbose) {
+            log.info("Writing {} to outputStream", message);
+        }
         String json = new Gson().toJson(message);
         try {
             this.outputStreamWriter.write(json + '\n');
