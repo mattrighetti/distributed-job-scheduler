@@ -137,6 +137,7 @@ public class ReverseProxy implements LBMessageHandler {
 
     private void handleResultMessage(Message<List<Tuple2<String, String>>> message, NodeHandler nodeHandler) {
         log.info("Received result from {}", nodeHandler);
+
         if (verbose) {
             log.debug("Message status: {}, type: {}, payload: {}",
                     message.status,
@@ -155,6 +156,7 @@ public class ReverseProxy implements LBMessageHandler {
 
     private void handleResultRequestsMessage(Message<List<String>> message, NodeHandler nodeHandler) {
         log.info("Received result request from {}", nodeHandler);
+
         if (verbose) {
             log.debug("Message status: {}, type: {}, payload: {}",
                     message.status,
@@ -173,6 +175,7 @@ public class ReverseProxy implements LBMessageHandler {
     private void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> message,
                                     NodeHandler nodeHandler) {
         log.info("Received result + request from {}", nodeHandler);
+
         if (verbose) {
             log.debug("Message status: {}, type: {}, payload: {}",
                     message.status,
@@ -188,6 +191,7 @@ public class ReverseProxy implements LBMessageHandler {
 
         log.info("Updating {} requests", nodeHandler);
         nodeResultRequests.put(nodeHandler, message.payload.item2);
+
         if (verbose) {
             log.debug("{} needs {}", nodeHandler, message.payload.item2);
         }
