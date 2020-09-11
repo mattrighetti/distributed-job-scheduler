@@ -25,7 +25,7 @@ public class Job implements Callable<String>, Serializable {
                 " milliseconds " +
                 "from " +
                 initExecutionTime +
-                " to" +
+                " to " +
                 new Timestamp(new Date().getTime());
     }
 

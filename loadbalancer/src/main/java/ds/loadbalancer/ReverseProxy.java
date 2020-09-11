@@ -82,6 +82,7 @@ public class ReverseProxy implements LBMessageHandler {
     @SuppressWarnings("unchecked")
     @Override
     public <T> void handleMessage(Message<T> message, NodeHandler nodeHandler) {
+        log.info("Received message of kind {} from {}", message.messageType, nodeHandler);
         switch (message.messageType) {
             case INFO:
                 handleInfoMessage((Message<Integer>) message, nodeHandler);
@@ -103,7 +104,6 @@ public class ReverseProxy implements LBMessageHandler {
 
     private void handleInfoMessage(Message<Integer> message, NodeHandler nodeHandler) {
         if (message.status == 200) {
-            log.info("Received info from {}", nodeHandler);
             if (verbose) {
                 log.debug("Message status: {}, type: {}, payload: {}, {}",
                         message.status,
@@ -121,21 +121,12 @@ public class ReverseProxy implements LBMessageHandler {
     }
 
     private void handleJobMessage(Message<Job> message, NodeHandler nodeHandler) {
-        log.info("Received job from {}", nodeHandler);
-        log.debug("Message status: {}, type: {}, payload: {}",
-                message.status,
-                message.messageType,
-                message.payload
-        );
-
         jobResults.put(message.payload.jobId, NULL.toString());
         globalJobDeque.addLast(message.payload);
         log.debug("Current number of jobs to dispatch: {}", this.globalJobDeque.size());
     }
 
     private void handleResultMessage(Message<List<Tuple2<String, String>>> message, NodeHandler nodeHandler) {
-        log.info("Received result from {}", nodeHandler);
-
         if (verbose) {
             log.debug("Message status: {}, type: {}, payload: {}",
                     message.status,
@@ -153,8 +144,6 @@ public class ReverseProxy implements LBMessageHandler {
     }
 
     private void handleResultRequestsMessage(Message<List<String>> message, NodeHandler nodeHandler) {
-        log.info("Received result request from {}", nodeHandler);
-
         if (verbose) {
             log.debug("Message status: {}, type: {}, payload: {}",
                     message.status,
@@ -172,7 +161,6 @@ public class ReverseProxy implements LBMessageHandler {
 
     private void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> message,
                                     NodeHandler nodeHandler) {
-        log.info("Received result + request from {}", nodeHandler);
 
         if (verbose) {
             log.debug("Message status: {}, type: {}, payload: {}",
