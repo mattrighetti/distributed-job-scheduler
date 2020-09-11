@@ -33,7 +33,6 @@ public class ReverseProxy implements LBMessageHandler {
     private final MapDao<String, String> jobResults;
     private final Map<NodeHandler, List<String>> nodeResultRequests;
     private final JobDao globalJobDeque;
-    private final JobDao globalDispatchedJobs;
     private final Timer timer;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final ExecutorService incomingConnectionsExecutor = Executors.newFixedThreadPool(maxNumNodes);
@@ -46,7 +45,6 @@ public class ReverseProxy implements LBMessageHandler {
         this.jobResults = new MapDao<>("./ReverseProxyJobResults");
         this.nodeResultRequests = new ConcurrentHashMap<>();
         this.globalJobDeque = new JobDao("./ReverseProxyGlobalQueue");
-        this.globalDispatchedJobs = new JobDao("./ReverseProxyGlobalDispatchedQueue");
         this.timer = new Timer();
     }
 
@@ -284,7 +282,7 @@ public class ReverseProxy implements LBMessageHandler {
                     return;
                 }
 
-                this.globalDispatchedJobs.add(this.globalJobDeque.removeFirst());
+                this.globalJobDeque.removeFirst();
                 list.get(0).item1 += 1;
                 list.sort(Comparator.comparingInt(o -> o.item1));
                 max_value--;
