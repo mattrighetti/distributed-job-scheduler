@@ -58,7 +58,10 @@ public class LoadBalancerHandler implements Callable<Void> {
                         this.stop();
                         return;
                     }
-                    log.debug("Read: {}", jsonData);
+
+                    if (verbose) {
+                        log.debug("Read: {}", jsonData);
+                    }
 
                     messageHandler.handleMessage(deserializeMessage(jsonData));
                 }
