@@ -69,7 +69,7 @@ public class NodeHandler implements Callable<Void> {
     }
 
     public void write(Message<?> message) throws SocketException {
-        log.info("Writing message to {}", this.clientSocket.getInetAddress());
+        log.info("Writing message of kind {} to {}", message.messageType, this.clientSocket.getInetAddress());
         String json = new Gson().toJson(message);
         try {
             this.outputStreamWriter.write(json + '\n');
