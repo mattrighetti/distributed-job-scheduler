@@ -19,8 +19,8 @@ public class FileStorageTest {
         Job readTest = null;
 
         try {
-            FileStorage.writeObjToFile(test, "./target/file1", true);
-            readTest = (Job) FileStorage.readObjFromFile("./target/file1", true);
+            FileStorage.writeObjToFile(test, "./target/file1");
+            readTest = (Job) FileStorage.readObjFromFile("./target/file1");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -35,8 +35,8 @@ public class FileStorageTest {
         Job test2 = null;
 
         try {
-            FileStorage.writeObjToFile(test1, "./target/file2", true);
-            test2 = (Job) FileStorage.readObjFromFile("./target/file2", true);
+            FileStorage.writeObjToFile(test1, "./target/file2");
+            test2 = (Job) FileStorage.readObjFromFile("./target/file2");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -47,7 +47,7 @@ public class FileStorageTest {
 
     @Test
     public void eReadTestFailure() {
-        assertNull(FileStorage.readObjFromFile("./target/this-file-does-not-exist", true));
+        assertNull(FileStorage.readObjFromFile("./target/this-file-does-not-exist"));
     }
 
     @Test
@@ -59,7 +59,7 @@ public class FileStorageTest {
         }
         for (int i = 0; i < 700; i++) {
             try {
-                FileStorage.writeObjToFile(jobQueue.get(i), "./target/file3", false);
+                FileStorage.writeObjToFile(jobQueue.get(i), "./target/file3");
             } catch (Exception e) {
                 e.printStackTrace();
             }

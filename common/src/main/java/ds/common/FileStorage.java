@@ -7,14 +7,18 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 
 public class FileStorage {
+    private static final boolean verbose =
+            System.getenv().containsKey("VERBOSE") && Boolean.parseBoolean(System.getenv("VERBOSE"));
     private static final Logger log = LogManager.getLogger(FileStorage.class.getName());
 
-    public static <T> void writeObjToFile(T objectToSerialize, String filepath, boolean verbose) {
+    public static <T> void writeObjToFile(T objectToSerialize, String filepath) {
         try (
                 FileOutputStream fileOut = new FileOutputStream(filepath);
                 ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)
         ) {
-            log.debug("Writing to file {}", objectToSerialize);
+            if (verbose) {
+                log.debug("Writing to file {}", objectToSerialize);
+            }
             objectOut.writeObject(objectToSerialize);
             if (verbose) {
                 log.info("The Object was successfully written to file");
@@ -30,7 +34,7 @@ public class FileStorage {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T readObjFromFile(String filepath, boolean verbose) {
+    public static <T> T readObjFromFile(String filepath) {
         T obj = null;
         try (
                 FileInputStream fileIn = new FileInputStream(filepath);

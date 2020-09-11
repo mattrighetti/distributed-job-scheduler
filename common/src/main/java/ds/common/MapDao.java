@@ -20,7 +20,7 @@ public class MapDao<K, V> implements Storable<Map<K, V>> {
 
     @Override
     public Map<K, V> readFromFile() {
-        Optional<Map<K, V>> map = Optional.ofNullable(FileStorage.readObjFromFile(filename, true));
+        Optional<Map<K, V>> map = Optional.ofNullable(FileStorage.readObjFromFile(filename));
         return map.orElseGet(ConcurrentHashMap::new);
     }
 
@@ -40,7 +40,7 @@ public class MapDao<K, V> implements Storable<Map<K, V>> {
 
     @Override
     public void saveToFile() {
-        FileStorage.writeObjToFile(this.map, filename, true);
+        FileStorage.writeObjToFile(this.map, filename);
     }
 
     public boolean isEmpty() {

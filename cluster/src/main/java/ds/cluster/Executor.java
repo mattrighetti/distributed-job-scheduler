@@ -8,12 +8,30 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Executor implements Runnable {
     private final JobDao jobDeque;
     private final MapDao<String, String> resultsMap;
     private final Timer timer;
+    private final AtomicBoolean stop = new AtomicBoolean(false);
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    TimerTask consumerTimerTask = new TimerTask() {
+        @Override
+        public void run() {
+            log.info("Running executor timer");
+            if (jobDeque.size() > 0) {
+                log.debug("Some jobs were found in the jobQue, starting consumer.");
+                consume();
+            } else if (stop.get()) {
+                log.debug("Executor is going to stop, restart ClusterNode to reconnect to ReverseProxy.");
+                timer.cancel();
+            } else {
+                log.debug("jobDeque is empty.");
+            }
+        }
+    };
 
     private static final Logger log = LogManager.getLogger(Executor.class.getName());
 
@@ -23,6 +41,10 @@ public class Executor implements Runnable {
         this.timer = new Timer();
     }
 
+    public void stopExecutorOnEmptyJobQueue() {
+        this.stop.set(true);
+    }
+
     /**
      * Triggers a TimerTask that checks every `period` if jobDeque has
      * available Jobs to consume.
@@ -30,18 +52,7 @@ public class Executor implements Runnable {
      */
     public void triggerTimerCheck(int period) {
         log.info("triggerTimerCheck");
-        this.timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                log.info("Running executor timer");
-                if (jobDeque.size() > 0) {
-                    log.debug("Some jobs were found in the jobQue, starting consumer.");
-                    consume();
-                } else {
-                    log.debug("jobDeque is empty.");
-                }
-            }
-        }, 0, period);
+        this.timer.schedule(consumerTimerTask, 0, period);
     }
 
     /**

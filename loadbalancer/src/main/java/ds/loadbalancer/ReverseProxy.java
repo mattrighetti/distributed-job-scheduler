@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -23,6 +24,8 @@ import static ds.common.Message.MessageType.RES_REQ;
 import static ds.common.Utils.Strings.NULL;
 
 public class ReverseProxy implements LBMessageHandler {
+    private static final boolean verbose =
+            System.getenv().containsKey("VERBOSE") && Boolean.parseBoolean(System.getenv("VERBOSE"));
     private final int maxNumNodes = System.getenv().containsKey("MAX_NUM_NODES") ?
             Integer.parseInt(System.getenv("MAX_NUM_NODES")) : 5;
     private final int listeningPort;
@@ -101,12 +104,14 @@ public class ReverseProxy implements LBMessageHandler {
     private void handleInfoMessage(Message<Integer> message, NodeHandler nodeHandler) {
         if (message.status == 200) {
             log.info("Received info from {}", nodeHandler);
-            log.debug("Message status: {}, type: {}, payload: {}, {}",
-                    message.status,
-                    message.messageType,
-                    message.payload,
-                    nodeHandler
-            );
+            if (verbose) {
+                log.debug("Message status: {}, type: {}, payload: {}, {}",
+                        message.status,
+                        message.messageType,
+                        message.payload,
+                        nodeHandler
+                );
+            }
             nodesInfo.put(nodeHandler, message.payload);
         } else if (message.status == 500) {
             log.warn("{} has been disconnected, removing nodeHandler.", nodeHandler);
@@ -130,11 +135,14 @@ public class ReverseProxy implements LBMessageHandler {
 
     private void handleResultMessage(Message<List<Tuple2<String, String>>> message, NodeHandler nodeHandler) {
         log.info("Received result from {}", nodeHandler);
-        log.debug("Message status: {}, type: {}, payload: {}",
-                message.status,
-                message.messageType,
-                message.payload
-        );
+
+        if (verbose) {
+            log.debug("Message status: {}, type: {}, payload: {}",
+                    message.status,
+                    message.messageType,
+                    message.payload
+            );
+        }
 
         nodeResultRequests.get(nodeHandler).clear();
 
@@ -146,25 +154,33 @@ public class ReverseProxy implements LBMessageHandler {
 
     private void handleResultRequestsMessage(Message<List<String>> message, NodeHandler nodeHandler) {
         log.info("Received result request from {}", nodeHandler);
-        log.debug("Message status: {}, type: {}, payload: {}",
-                message.status,
-                message.messageType,
-                message.payload
-        );
+
+        if (verbose) {
+            log.debug("Message status: {}, type: {}, payload: {}",
+                    message.status,
+                    message.messageType,
+                    message.payload
+            );
+        }
 
         log.info("Updating {} requests", nodeHandler);
         nodeResultRequests.put(nodeHandler, message.payload);
-        log.debug("{} needs {}", nodeHandler, message.payload);
+        if (verbose) {
+            log.debug("{} needs {}", nodeHandler, message.payload);
+        }
     }
 
     private void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> message,
                                     NodeHandler nodeHandler) {
         log.info("Received result + request from {}", nodeHandler);
-        log.debug("Message status: {}, type: {}, payload: {}",
-                message.status,
-                message.messageType,
-                message.payload
-        );
+
+        if (verbose) {
+            log.debug("Message status: {}, type: {}, payload: {}",
+                    message.status,
+                    message.messageType,
+                    message.payload
+            );
+        }
 
         message.payload.item1.forEach(tuple -> {
             log.debug("Inserting result of Job[{}] in resultsMap", tuple.item1);
@@ -173,7 +189,10 @@ public class ReverseProxy implements LBMessageHandler {
 
         log.info("Updating {} requests", nodeHandler);
         nodeResultRequests.put(nodeHandler, message.payload.item2);
-        log.debug("{} needs {}", nodeHandler, message.payload.item2);
+
+        if (verbose) {
+            log.debug("{} needs {}", nodeHandler, message.payload.item2);
+        }
     }
 
     public void requestResultsRoutine(int period) {
@@ -195,22 +214,34 @@ public class ReverseProxy implements LBMessageHandler {
                             log.debug("All results are stored correctly.");
                             return;
                         case "10":
-                            log.debug("Sending result request to {}", nodeHandler);
+                            if (verbose) {
+                                log.debug("Sending result request to {}", nodeHandler);
+                            }
                             message = new Message<>(200, REQUEST_OF_RES, emptyResults);
                             break;
                         case "01":
-                            log.debug("Sending results to {}", nodeHandler);
+                            if (verbose) {
+                                log.debug("Sending results to {}", nodeHandler);
+                            }
                             message = new Message<>(200, RESULT, nodeResultsRequests);
                             break;
                         case "11":
-                            log.debug("Sending results and results request to {}", nodeHandler);
+                            if (verbose) {
+                                log.debug("Sending results and results request to {}", nodeHandler);
+                            }
                             Tuple2<List<Tuple2<String, String>>, List<String>> payloadPackage =
                                     new Tuple2<>(nodeResultsRequests, emptyResults);
                             message = new Message<>(200, RES_REQ, payloadPackage);
                             break;
                     }
 
-                    nodeHandler.write(message);
+                    try {
+                        nodeHandler.write(message);
+                    } catch (SocketException e) {
+                        log.warn("Removing {} from nodesInfo caused by disconnection.", nodeHandler);
+                        nodesInfo.remove(nodeHandler);
+                        nodeResultRequests.remove(nodeHandler);
+                    }
                 });
             }
         };
@@ -242,8 +273,16 @@ public class ReverseProxy implements LBMessageHandler {
         Dispatcher.applyAlgorithmFunction(max, (max_value) -> {
             Job jobToDispatch;
             while (max_value > 0) {
-                jobToDispatch = this.globalJobDeque.removeFirst();
-                ((NodeHandler) list.get(0).item2).write(new Message<>(200, JOB, jobToDispatch));
+                jobToDispatch = this.globalJobDeque.getFirst();
+
+                try {
+                    ((NodeHandler) list.get(0).item2).write(new Message<>(200, JOB, jobToDispatch));
+                } catch (SocketException e) {
+                    log.error("A node disconnected while dispatching was in action, recovering...");
+                    return;
+                }
+
+                this.globalJobDeque.removeFirst();
                 list.get(0).item1 += 1;
                 list.sort(Comparator.comparingInt(o -> o.item1));
                 max_value--;

@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -67,12 +68,14 @@ public class NodeHandler implements Callable<Void> {
         });
     }
 
-    public void write(Message<?> message) {
-        log.info("Writing message to outputStream {}", this);
+    public void write(Message<?> message) throws SocketException {
+        log.info("Writing message to {}", this.clientSocket.getInetAddress());
         String json = new Gson().toJson(message);
         try {
             this.outputStreamWriter.write(json + '\n');
             this.outputStreamWriter.flush();
+        } catch (SocketException e) {
+            throw new SocketException();
         } catch (IOException e) {
             e.printStackTrace();
         }

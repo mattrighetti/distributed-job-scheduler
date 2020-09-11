@@ -3,7 +3,6 @@ package ds.cluster;
 import ds.common.*;
 import ds.common.Utils.HashGenerator;
 import ds.common.Utils.StreamUtils;
-import ds.common.Utils.Strings;
 import ds.common.Utils.Tuple2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,6 +20,8 @@ import static ds.common.Message.MessageType.*;
 import static ds.common.Utils.Strings.NULL;
 
 public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
+    private static final boolean verbose =
+            System.getenv().containsKey("VERBOSE") && Boolean.parseBoolean(System.getenv("VERBOSE"));
     private LoadBalancerHandler loadBalancerHandler;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final JobDao localJobDeque;
@@ -28,6 +30,64 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     private final Timer timer;
     private final Executor executor;
     private final ExecutorService executorService = Executors.newFixedThreadPool(3);
+
+    TimerTask jobQueueInfoTask = new TimerTask() {
+        @Override
+        public void run() {
+            Message<Integer> localDequeInfoMessage = new Message<>(200, INFO, localJobDeque.size());
+            log.info("Sending info message to server");
+            log.debug("Message: {}", localDequeInfoMessage);
+            try {
+                loadBalancerHandler.write(localDequeInfoMessage);
+            } catch (SocketException e) {
+                log.error(e.getMessage() + " sendJobQueueInfo");
+            }
+        }
+    };
+
+    TimerTask requestResultsTask = new TimerTask() {
+        @Override
+        public void run() {
+            List<String> emptyResults = StreamUtils.emptyResultList(resultsMap.getMap());
+            List<Tuple2<String, String>> lbResultRequest =
+                    StreamUtils.availableResults(loadBalancerResultRequestList, resultsMap.getMap());
+
+            lbResultRequest.forEach(tuple -> loadBalancerResultRequestList.remove(tuple.item1));
+
+            String bin1 = emptyResults.isEmpty() ? "0" : "1";
+            String bin2 = lbResultRequest.isEmpty() ? "0" : "1";
+            String mask = bin1 + bin2;
+
+            Message<?> message = null;
+            switch (mask) {
+                case "00":
+                    log.debug("All results are stored correctly.");
+                    message = new Message<>(200, REQUEST_OF_RES, new ArrayList<>());
+                    break;
+                case "10":
+                    log.info("Sending result request to loadbalancer.");
+                    message = new Message<>(200, REQUEST_OF_RES, emptyResults);
+                    break;
+                case "01":
+                    log.info("Sending results to loadbalancer.");
+                    message = new Message<>(200, RESULT, lbResultRequest);
+                    break;
+                case "11":
+                    log.info("Sending results and results request to loadbalancer.");
+                    Tuple2<List<Tuple2<String, String>>, List<String>> payloadPackage =
+                            new Tuple2<>(lbResultRequest, emptyResults);
+                    message = new Message<>(200, RES_REQ, payloadPackage);
+                    break;
+            }
+
+            try {
+                loadBalancerHandler.write(message);
+            } catch (SocketException e) {
+                log.error(e.getMessage() + " [requestResult]");
+                handleReverseProxyDisconnection();
+            }
+        }
+    };
 
     private static final Logger log = LogManager.getLogger(ClusterNode.class.getName());
 
@@ -49,7 +109,8 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
             this.loadBalancerHandler = new LoadBalancerHandler(socket, this);
             this.executorService.submit(this.loadBalancerHandler);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.fatal("Could not connect to ReverseProxy. Try again later.");
+            System.exit(-1);
         }
     }
 
@@ -69,59 +130,10 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
     }
 
     public void sendJobQueueInfo() {
-        TimerTask jobQueueInfoTask = new TimerTask() {
-            @Override
-            public void run() {
-                Message<Integer> localDequeInfoMessage = new Message<>(200, INFO, localJobDeque.size());
-                log.info("Sending info message to server");
-                log.debug("Message: {}", localDequeInfoMessage);
-                loadBalancerHandler.write(localDequeInfoMessage);
-            }
-        };
-
         timer.schedule(jobQueueInfoTask, 0, 1000);
     }
 
     public void requestResults() {
-        TimerTask requestResultsTask = new TimerTask() {
-            @Override
-            public void run() {
-                List<String> emptyResults = StreamUtils.emptyResultList(resultsMap.getMap());
-                List<Tuple2<String, String>> lbResultRequest =
-                        StreamUtils.availableResults(loadBalancerResultRequestList, resultsMap.getMap());
-
-                lbResultRequest.forEach(tuple -> loadBalancerResultRequestList.remove(tuple.item1));
-
-                String bin1 = emptyResults.isEmpty() ? "0" : "1";
-                String bin2 = lbResultRequest.isEmpty() ? "0" : "1";
-                String mask = bin1 + bin2;
-
-                Message<?> message = null;
-                switch (mask) {
-                    case "00":
-                        log.debug("All results are stored correctly.");
-                        message = new Message<>(200, REQUEST_OF_RES, new ArrayList<>());
-                        break;
-                    case "10":
-                        log.info("Sending result request to loadbalancer.");
-                        message = new Message<>(200, REQUEST_OF_RES, emptyResults);
-                        break;
-                    case "01":
-                        log.info("Sending results to loadbalancer.");
-                        message = new Message<>(200, RESULT, lbResultRequest);
-                        break;
-                    case "11":
-                        log.info("Sending results and results request to loadbalancer.");
-                        Tuple2<List<Tuple2<String, String>>, List<String>> payloadPackage =
-                                new Tuple2<>(lbResultRequest, emptyResults);
-                        message = new Message<>(200, RES_REQ, payloadPackage);
-                        break;
-                }
-
-                loadBalancerHandler.write(message);
-            }
-        };
-
         timer.schedule(requestResultsTask, 0, 3 * 1000);
     }
 
@@ -164,7 +176,9 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
 
         log.info("Resetting loadBalancerResultRequestList");
         loadBalancerResultRequestList.clear();
-        log.debug("Updated LBRequest after RESULT: {}", loadBalancerResultRequestList);
+        if (verbose) {
+            log.debug("Updated LBRequest after RESULT: {}", loadBalancerResultRequestList);
+        }
 
         resultList.forEach(result -> {
             log.debug("Inserting result of Job[{}] in resultsMap", result.item1);
@@ -179,7 +193,9 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         log.info("Resetting loadBalancerResultRequestList");
         loadBalancerResultRequestList.clear();
         loadBalancerResultRequestList.addAll(requestList);
-        log.debug("Updated LBRequest: {}", loadBalancerResultRequestList);
+        if (verbose) {
+            log.debug("Updated LBRequest: {}", loadBalancerResultRequestList);
+        }
     }
 
     public void handleMixedMessage(Message<Tuple2<List<Tuple2<String, String>>, List<String>>> mixedMessage) {
@@ -195,14 +211,23 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         log.info("Resetting loadBalancerResultRequestList");
         loadBalancerResultRequestList.clear();
         loadBalancerResultRequestList.addAll(requestList);
-        log.debug("Updated LBRequest: {}", loadBalancerResultRequestList);
+        if (verbose) {
+            log.debug("Updated LBRequest: {}", loadBalancerResultRequestList);
+        }
     }
 
     @Override
-    public String handleJobSubmission(int milliseconds) {
+    public String handleJobSubmission(int milliseconds) throws Exception {
         String ticketHash = HashGenerator.generateHash(16);
         Message<Job> jobMessage = new Message<>(200, JOB, new Job(ticketHash, milliseconds));
-        loadBalancerHandler.write(jobMessage);
+
+        try {
+            loadBalancerHandler.write(jobMessage);
+        } catch (SocketException e) {
+            log.error(e.getMessage() + " [handleJobSubmission]");
+            throw new Exception("Could not contact ReverseProxy");
+        }
+
         resultsMap.put(ticketHash, NULL.toString());
         return ticketHash;
     }
@@ -232,5 +257,13 @@ public class ClusterNode implements MessageHandler, ClientSubmissionHandler {
         }
 
         return stringBuilder.toString();
+    }
+
+    @Override
+    public void handleReverseProxyDisconnection() {
+        log.warn("Stopping every outgoing message task.");
+        jobQueueInfoTask.cancel();
+        requestResultsTask.cancel();
+        executor.stopExecutorOnEmptyJobQueue();
     }
 }

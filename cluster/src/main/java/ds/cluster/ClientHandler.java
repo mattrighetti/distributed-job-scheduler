@@ -37,54 +37,52 @@ public class ClientHandler implements Runnable {
     }
 
     void askRoutine() {
+
         if (!enablePiping) {
-            printWriter.println("Please submit the number of ms you would like to submit or write 'exit' to quit");
-            printWriter.flush();
+            write("Please submit the number of ms you would like to submit or write 'exit' to quit");
         }
+
         boolean isDone = false;
         String line;
         while (!isDone) {
+
             if (!enablePiping) {
-                printWriter.print("Milliseconds: ");
-                printWriter.flush();
+                write("Milliseconds: ");
             }
+
             line = scanner.nextLine();
             log.debug("Client entered '{}'", line);
 
             if (line == null || line.toLowerCase().trim().equals("exit")) {
                 isDone = true;
+            } else if (line.toCharArray()[0] == 'r') {
+                char[] requestedHashArray = Arrays.copyOfRange(line.toCharArray(), 1, line.length());
+                String requestedHash = String.copyValueOf(requestedHashArray);
+                Optional<String> result = clientSubmissionHandler.handleResultRequest(requestedHash);
+
+                write(result
+                        .map(s -> "Result: " + s)
+                        .orElse("Result has not been executed yet, come back later.")
+                );
+
+            } else if (line.toLowerCase().trim().equals("getall")) {
+                String results = clientSubmissionHandler.getAllStoredResults();
+                write(results);
             } else {
-                if (line.toCharArray()[0] == 'r') {
-                    char[] requestedHashArray = Arrays.copyOfRange(line.toCharArray(), 1, line.length());
-                    String requestedHash = String.copyValueOf(requestedHashArray);
-                    Optional<String> result = clientSubmissionHandler.handleResultRequest(requestedHash);
-
-                    if (result.isPresent()) {
-                        printWriter.println("Result: " + result.get());
-                    } else {
-                        printWriter.println("Result has not been executed yet, come back later.");
-                    }
-
-                    printWriter.flush();
-                } else if (line.toLowerCase().trim().equals("getall")) {
-                    String results = clientSubmissionHandler.getAllStoredResults();
-                    printWriter.println(results);
-                    printWriter.flush();
-                } else {
-                    try {
-                        String ticketHash = clientSubmissionHandler.handleJobSubmission(Integer.parseInt(line));
-                        printWriter.println("Ticket ID: " + ticketHash);
-                        printWriter.flush();
-                    } catch (NumberFormatException e) {
-                        log.error("Could not parse to integer.");
-                        printWriter.println("Please enter a valid number.");
-                    }
+                try {
+                    String ticketHash = clientSubmissionHandler.handleJobSubmission(Integer.parseInt(line));
+                    write("Ticket ID: " + ticketHash);
+                } catch (NumberFormatException e) {
+                    log.error("Could not parse to integer.");
+                    write("Please enter a valid number.");
+                } catch (Exception e) {
+                    log.error("Could not contact ReverseProxy");
+                    write(e.getMessage());
                 }
             }
         }
 
-        printWriter.println("Come back later to check your results.");
-        printWriter.flush();
+        write("Come back later to check your results.");
 
         this.printWriter.close();
         this.scanner.close();
@@ -95,6 +93,11 @@ public class ClientHandler implements Runnable {
             log.error("Encountered error while closing clientSocket");
             e.printStackTrace();
         }
+    }
+
+    private void write(String message) {
+        printWriter.println(message);
+        printWriter.flush();
     }
 
     @Override
