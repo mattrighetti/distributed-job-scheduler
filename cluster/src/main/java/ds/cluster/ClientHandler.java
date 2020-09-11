@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Scanner;
 
@@ -50,7 +51,12 @@ public class ClientHandler implements Runnable {
                 write("Milliseconds: ");
             }
 
-            line = scanner.nextLine();
+            try {
+                line = scanner.nextLine();
+            } catch (NoSuchElementException e) {
+                line = "exit";
+            }
+
             log.debug("Client entered '{}'", line);
 
             if (line == null || line.toLowerCase().trim().equals("exit")) {
